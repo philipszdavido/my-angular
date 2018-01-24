@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>GoogleAnalyticsWithAngular</title>
+    <base href="/">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+    <!--<app-root></app-root>-->
+    <x-foo></x-foo>
+    <x-treehouse></x-treehouse>
+    If nothing appeared below, then your browser does not support Custom Elements yet.
+    <x-product data-name="Ruby" data-img="https://s3-us-west-2.amazonaws.com/s.cdpn.io/4621/ruby.png" data-url="http://example.com/1"></x-product>
+    <x-product data-name="JavaScript" data-img="https://s3-us-west-2.amazonaws.com/s.cdpn.io/4621/javascript.png" data-url="http://example.com/2"></x-product>
+    <x-product data-name="Python" data-img="https://s3-us-west-2.amazonaws.com/s.cdpn.io/4621/python.png" data-url="http://example.com/3"></x-product>
+    <script>
+        /* var xFoo = document.createElement('app-root');
+                                                                        xFoo.addEventListener('click', function(e) {
+                                                                            alert('Thanks!');
+                                                                        });
+                                                                        xFoo.innerHTML = 'MyRoot'
+                                                                        document.body.appendChild(xFoo);*/
+        /*var XFooProto = Object.create(HTMLElement.prototype);
+
+        // 1. Give x-foo a foo() method.
+        XFooProto.foo = function() {
+            alert('foo() called');
+        };
+
+        // 2. Define a property read-only "bar".
+        Object.defineProperty(XFooProto, "bar", {
+            value: 5
+        });
+
+        // 3. Register x-foo's definition.
+        var XFoo = document.registerElement('x-foo', {
+            prototype: XFooProto
+        });
+
+        // 4. Instantiate an x-foo.
+        var xfoo = document.createElement('x-foo');
+
+        // 5. Add it to the page.
+        document.body.appendChild(xfoo);
+        var XTreehouseElement = document.registerElement('x-treehouse');
+        document.body.appendChild(new XTreehouseElement());*/
+        // Create a class for the element
+        class XProduct extends HTMLElement {
+            constructor() {
+                // Always call super first in constructor
+                super();
+
+                // Create a shadow root
+                var shadow = this.attachShadow({
+                    mode: 'open'
+                });
+
+                // Create a standard img element and set its attributes.
+                var img = document.createElement('img');
+                img.alt = this.getAttribute('data-name');
+                img.src = this.getAttribute('data-img');
+                img.width = '150';
+                img.height = '150';
+                img.className = 'product-img';
+
+                // Add the image to the shadow root.
+                shadow.appendChild(img);
+
+                // Add an event listener to the image.
+                img.addEventListener('click', () => {
+                    window.location = this.getAttribute('data-url');
+                });
+
+                // Create a link to the product.
+                var link = document.createElement('a');
+                link.innerText = this.getAttribute('data-name');
+                link.href = this.getAttribute('data-url');
+                link.className = 'product-name';
+
+                // Add the link to the shadow root.
+                shadow.appendChild(link);
+            }
+        }
+
+        // Define the new element
+        customElements.define('x-product', XProduct);
+    </script>
+
+</body>
+
+</html>
