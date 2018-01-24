@@ -44,3 +44,63 @@ el.getElementsByTagName('a')
 
 console.log(el);
 }
+
+export function DOMtoHTML(params: Array<Object>) {
+    /*
+        {
+            element: '',
+            children: [{}],
+            attrs: [
+                {
+                    name: '',
+                    value: ''
+                }
+            ]
+        }
+        eg:
+        [
+            {
+                element: 'div',
+                children: [{
+                    element: 'li'
+                }]
+                attrs: [{
+                    name: null,
+                    value: null
+                }]
+            },
+            {
+                element: 'h1',
+                attrs: [{
+                    name: null,
+                    value: null
+                }]
+            }
+        ]
+
+        =>
+        '<div><li></li></div><h1></h1>'
+    */
+    var html = ''
+    params.forEach((p) => {
+        html += htmlize(p)
+    })
+
+    function htmlize(f){
+        return f.type
+        //console.log(f.type)
+    }
+    console.log(html)
+}
+
+
+
+
+
+
+
+
+
+
+
+

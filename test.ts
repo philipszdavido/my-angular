@@ -1,5 +1,6 @@
 import { Component } from './framework/Component';
-import { bootstrap, readInComponents } from './framework/bootstrap';
+import { bootstrap, readInComponents, DOMtoHTML } from './framework/bootstrap';
+import * as HTML from 'html-parse-stringify'
 
 var classes = []
 
@@ -54,4 +55,17 @@ console.log('\n',classes)
 readInComponents("<h1>Welcome</h1><to-do></to-do><a href=''></a>")
 readInComponents('<div>1</div><div>2</div>')
 readInComponents('<div><b>Hello!</b></div>')
+var dom = [
+  {
+    type: 'div',
+    children: [{
+      type: 'li'
+    }]
+  },
+  {
+    type: 'h1'
+  }
+];
+
 //bootstrap(Person)
+DOMtoHTML(dom)
