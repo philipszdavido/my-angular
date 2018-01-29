@@ -93,7 +93,59 @@ export function DOMtoHTML(params: Array<Object>) {
     console.log(html)
 }
 
+export function parse(val: string, pi : any) {
+    var indexes = [
+        {
+            loc: [],
+            expr: ''
+        }
+    ]
+    var start
+    var ast = {
+        loc: [],
+        expr: ''
+    }
+    var expr
 
+    for (var index = 0; index < val.length; index++) {
+        if (val[index] == '{') {
+            start = true
+            ast.loc.push(index)
+        }
+        if(start && val[index] !== '{') {
+            expr += val[index]
+        }
+        if(val[index] == '}') {
+            start = false
+            ast.loc.push(index)
+            indexes.push(ast)
+            expr = ''
+            ast = {
+                loc: [],
+                expr: ''
+            }
+        }
+    }
+    return compile(val, indexes, pi)
+
+    function compile(val: string, indexes: Array<any>, pi: Object) {
+        indexes.forEach((i) => {
+            var expr = i.expr
+            var loc = i.loc
+            //evaluate expr
+            for (var key in pi) { 
+            }
+        })
+    }
+}
+
+export function compileExpr(tpl, obj) {
+    var re = /{([^}]+)?}/g
+    var match
+    while (match = re.exec(tpl)) {
+        console.log(match)        
+    }
+}
 
 
 

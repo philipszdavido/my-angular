@@ -1,5 +1,5 @@
-import { Component } from './framework/Component';
-import { bootstrap, readInComponents, DOMtoHTML } from './framework/bootstrap';
+import { Component } from './framework/core/Component';
+import { bootstrap, readInComponents, DOMtoHTML, parse, compileExpr } from './framework/platform-browser/bootstrap';
 import * as HTML from 'html-parse-stringify'
 
 var classes = []
@@ -66,6 +66,26 @@ var dom = [
     type: 'h1'
   }
 ];
+class P {
+  a = 8
+  b = 9
+  constructor(){}
+}
+var template = "<h1>{a+b}</h1><li>{a*b}</li>"
 
+var pi = new P()
+for (var key in pi) {
+  console.log('key:' + key + ' value:' + pi[key])
+}
 //bootstrap(Person)
-DOMtoHTML(dom)
+//DOMtoHTML(dom)
+//parse(template, pi)
+compileExpr(template, pi)
+
+
+
+
+
+
+
+
