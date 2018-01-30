@@ -31,4 +31,5 @@ bootstrap(Person);
 * template compiler
 * Dependency injection
 * Compile components, directives
-* Compile template component's css
+* Compile template component's css e.g 'style: [comp.css]'
+* Compile expressions e.g '{a + b}'
