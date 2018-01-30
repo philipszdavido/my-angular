@@ -2,14 +2,41 @@
 
 const compTree={}
 const compList = []
+let directives = []
 let rootCompo
 var html = ''
 
 function bootstrap(params) {
     rootCompo = params[0]
     compListToCompTree(params)
+    var events = ['click','keydown','keyup','hover']
+    events.forEach((event)=>{
+        addEventListener(event, function myFunc (){
+
+            myFunc.apply(this, arguments);
+        })
+    })
     document.getElementsByTagName('app-root')[0].innerHTML = html
 }
+/** Setup our built-in directives */
+/** *ngFor directive */
+@Directive({
+    selector: '*ngFor'
+})
+class ngFor {
+    constructor(parameters) {
+        
+    }
+}
+@Directive({
+    selector: '*ngIf'
+})
+class ngIf {
+    constructor(parameters) {
+        
+    }
+}
+/** end */
 
 /** parse the compos array to compo tree */
 function compListToCompTree(params) {
@@ -69,6 +96,18 @@ function compListToCompTree(params) {
         return match
     }
 }
+function Directive(val: any) {
+    return (target: Function)=>{
+        var el = {
+            selector: null
+        }
+        for (var key in val) {
+            el[key] = val[key] 
+        }
+        el['class'] = target
+        directives.push(el)
+    }
+}
 function Component(val: any) {
     return (target: Function) => {
         var el = {
@@ -89,7 +128,9 @@ function Component(val: any) {
 /** App starts here */
 @Component({
     selector: 'app-root',
-    template: '<h1>Hello App-Root</h1><todo></todo>'
+    template: `
+    <h1>Hello App-Root</h1>
+    <todo></todo>`
 })
 class AppComp {
     a = 9
@@ -99,7 +140,9 @@ class AppComp {
 }
 @Component({
     selector: 'todo',
-    template: '<h2>ToDos App</h2><todo-list></todo-list>'
+    template: `
+    <h2>ToDos App</h2>
+    <todo-list></todo-list>`
 })
 class Todo {
     a = 9
@@ -109,7 +152,12 @@ class Todo {
 }
 @Component({
     selector: 'todo-list',
-    template: '<ul><li>Eat</li><li>Sleep</li><li>Code</li></ul>'
+    template: `
+    <ul>
+        <li>Eat</li>
+        <li>Sleep</li>
+        <li>Code</li>
+    </ul>`
 })
 class TodoList {
     a = 9

@@ -12,6 +12,12 @@ var html = '';
 function bootstrap(params) {
     rootCompo = params[0];
     compListToCompTree(params);
+    var events = ['click', 'keydown', 'keyup', 'hover'];
+    events.forEach(function (event) {
+        addEventListener(event, function myFunc() {
+            myFunc.apply(this, arguments);
+        });
+    });
     document.getElementsByTagName('app-root')[0].innerHTML = html;
 }
 /** parse the compos array to compo tree */
@@ -96,7 +102,7 @@ var AppComp = (function () {
     AppComp = __decorate([
         Component({
             selector: 'app-root',
-            template: '<h1>Hello App-Root</h1><todo></todo>'
+            template: "\n    <h1>Hello App-Root</h1>\n    <todo></todo>"
         })
     ], AppComp);
     return AppComp;
@@ -108,7 +114,7 @@ var Todo = (function () {
     Todo = __decorate([
         Component({
             selector: 'todo',
-            template: '<h2>ToDos App</h2><todo-list></todo-list>'
+            template: "\n    <h2>ToDos App</h2>\n    <todo-list></todo-list>"
         })
     ], Todo);
     return Todo;
@@ -120,7 +126,7 @@ var TodoList = (function () {
     TodoList = __decorate([
         Component({
             selector: 'todo-list',
-            template: '<ul><li>Eat</li><li>Sleep</li><li>Code</li></ul>'
+            template: "\n    <ul>\n        <li>Eat</li>\n        <li>Sleep</li>\n        <li>Code</li>\n    </ul>"
         })
     ], TodoList);
     return TodoList;
