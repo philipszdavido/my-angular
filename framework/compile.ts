@@ -89,7 +89,7 @@ function Component(val: any) {
 /** App starts here */
 @Component({
     selector: 'app-root',
-    template: '<todo></todo><h1>Hello App Root</h1><todo></todo><h4>lol</h4><todo></todo>'
+    template: '<h1>Hello App-Root</h1><todo></todo>'
 })
 class AppComp {
     a = 9
@@ -99,7 +99,7 @@ class AppComp {
 }
 @Component({
     selector: 'todo',
-    template: '<h1>ToDo</h1><todo-list></todo-list>'
+    template: '<h2>ToDos App</h2><todo-list></todo-list>'
 })
 class Todo {
     a = 9
@@ -109,7 +109,7 @@ class Todo {
 }
 @Component({
     selector: 'todo-list',
-    template: '<ul><li>Eat</li></ul>'
+    template: '<ul><li>Eat</li><li>Sleep</li><li>Code</li></ul>'
 })
 class TodoList {
     a = 9

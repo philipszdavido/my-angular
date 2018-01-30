@@ -1,10 +1,10 @@
+/** Author : Chidume Nnamdi*/
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-/** */
 var compTree = {};
 var compList = [];
 var rootCompo;
@@ -96,7 +96,7 @@ var AppComp = (function () {
     AppComp = __decorate([
         Component({
             selector: 'app-root',
-            template: '<todo></todo><h1>Hello App Root</h1><todo></todo><h4>lol</h4><todo></todo>'
+            template: '<h1>Hello App-Root</h1><todo></todo>'
         })
     ], AppComp);
     return AppComp;
@@ -108,7 +108,7 @@ var Todo = (function () {
     Todo = __decorate([
         Component({
             selector: 'todo',
-            template: '<h1>ToDo</h1><todo-list></todo-list>'
+            template: '<h2>ToDos App</h2><todo-list></todo-list>'
         })
     ], Todo);
     return Todo;
@@ -120,7 +120,7 @@ var TodoList = (function () {
     TodoList = __decorate([
         Component({
             selector: 'todo-list',
-            template: '<ul><li>Eat</li></ul>'
+            template: '<ul><li>Eat</li><li>Sleep</li><li>Code</li></ul>'
         })
     ], TodoList);
     return TodoList;
