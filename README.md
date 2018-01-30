@@ -24,3 +24,9 @@ import Person from 'person.component'
 
 bootstrap(Person);
 ```
+
+## Angular tech achieved
+
+* Change detection
+* template compiler
+* Dependency injection
