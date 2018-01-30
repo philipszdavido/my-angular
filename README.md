@@ -25,8 +25,10 @@ import Person from 'person.component'
 bootstrap(Person);
 ```
 
-## Angular tech achieved
+## Angular tech to achieve
 
 * Change detection
 * template compiler
 * Dependency injection
+* Compile components, directives
+* Compile template component's css

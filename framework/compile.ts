@@ -1,4 +1,5 @@
-/** */
+/** Author : Chidume Nnamdi*/
+
 const compTree={}
 const compList = []
 let rootCompo
