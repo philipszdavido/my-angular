@@ -33,6 +33,8 @@
     "@types/pluralize": "0.0.27",
     "html-parse-stringify": "^1.0.2",
     "html-tags": "^2.0.0",
+    "htmlparser2": "^9.0.0",
+    "incremental-dom": "^0.7.0",
     "pluralize": "^7.0.0"
   }
 }
