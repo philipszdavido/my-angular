@@ -3,7 +3,11 @@
   "version": "0.0.1",
   "description": "A JS framework inspired by Angular",
   "main": "dist/index.js",
+  "bin": {
+    "serve": "./bin/ng"
+  },
   "scripts": {
+    "serve": "./compiler/ivy_plugin.js",
     "build": "tsc",
     "test": "mocha --reporter spec",
     "cover": "istanbul cover node_modules/mocha/bin/_mocha test/*.js -- -R spec"
@@ -27,14 +31,18 @@
     "istanbul": "^0.4.5",
     "mocha": "^4.0.1",
     "ts-node": "^3.3.0",
-    "typescript": "^2.5.3"
+    "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@types/glob": "^8.1.0",
     "@types/pluralize": "0.0.27",
+    "commander": "^11.1.0",
     "html-parse-stringify": "^1.0.2",
     "html-tags": "^2.0.0",
     "htmlparser2": "^9.0.0",
     "incremental-dom": "^0.7.0",
-    "pluralize": "^7.0.0"
+    "pluralize": "^7.0.0",
+    "webpack": "^5.89.0",
+    "webpack-dev-server": "^4.15.1"
   }
 }
