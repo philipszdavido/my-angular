@@ -1,21 +1,23 @@
 import * as ts from "typescript";
-import { hasComponentDecorator, transformComponentToIvy } from "./transformer";
+import {
+  hasComponentDecorator,
+  transformComponentToIvy,
+  updateClassDeclaration,
+} from "./transformer";
 
 export function transformPlugin(
-  program
+  program: ts.Program
 ): ts.TransformerFactory<ts.SourceFile> | ts.CustomTransformerFactory {
   return (context): any => {
-    function visit(node) {
-      //   if (ts.isClassDeclaration(node)) {
-      //     return ts.visitEachChild(node, visit, context);
-      //   }
+    function visit(node: ts.Node) {
+      if (ts.isDecorator(node)) {
+        return null; //node; //ts.visitEachChild(node, visit, context);
+      }
+
       if (ts.isClassDeclaration(node) && hasComponentDecorator(node)) {
-        const classNode = ts.visitEachChild(
-          transformComponentToIvy(node, context),
-          visit,
-          context
-        );
-        return classNode;
+        const ivyNode = transformComponentToIvy(node, context);
+
+        return updateClassDeclaration(node, ivyNode);
       }
 
       return ts.visitEachChild(node, visit, context);
