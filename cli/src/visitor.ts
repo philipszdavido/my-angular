@@ -1,5 +1,7 @@
 import * as ts from "typescript";
 import {
+  extractComponentMetadata,
+  getComponentDecorator,
   hasComponentDecorator,
   transformComponentToIvy,
   updateClassDeclaration,
@@ -9,15 +11,9 @@ export function transformPlugin(
   program: ts.Program
 ): ts.TransformerFactory<ts.SourceFile> | ts.CustomTransformerFactory {
   return (context): any => {
-    function visit(node: ts.Node) {
-      if (ts.isDecorator(node)) {
-        return null; //node; //ts.visitEachChild(node, visit, context);
-      }
-
+    function visit(node: ts.Node): ts.Node {
       if (ts.isClassDeclaration(node) && hasComponentDecorator(node)) {
-        const ivyNode = transformComponentToIvy(node, context);
-
-        return updateClassDeclaration(node, ivyNode);
+        extractComponentMetadata(getComponentDecorator(node));
       }
 
       return ts.visitEachChild(node, visit, context);

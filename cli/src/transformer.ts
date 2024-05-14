@@ -1,6 +1,6 @@
 import * as ts from "typescript";
 
-export function hasComponentDecorator(node) {
+export function hasComponentDecorator(node: ts.ClassDeclaration) {
   const decorators = ts.getDecorators(node);
   return (
     decorators &&
@@ -13,13 +13,35 @@ export function hasComponentDecorator(node) {
   );
 }
 
-export function getComponentDecorator(node) {
+export function getComponentDecorator(node: ts.ClassDeclaration): ts.Decorator {
   const decorators = ts.getDecorators(node);
   return decorators.find(
     (decorator) =>
       ts.isCallExpression(decorator.expression) &&
       ts.isIdentifier(decorator.expression.expression) &&
       decorator.expression.expression.text === "Component"
+  );
+}
+
+export function extractComponentMetadata(decorator: ts.Decorator) {
+  const metadata = (decorator.expression as ts.CallExpression)
+    .arguments[0] as ts.ObjectLiteralExpression;
+
+  const selector = getMetadataProperty(metadata.properties, "selector");
+  const standalone = getMetadataProperty(metadata.properties, "standalone");
+  const template = getMetadataProperty(metadata.properties, "template");
+
+  // templateUrl
+  const templateUrl = getMetadataProperty(metadata.properties, "templateUrl");
+  const styleUrls = getMetadataProperty(metadata.properties, "templateUrl");
+}
+
+function getMetadataProperty(
+  properties: ts.NodeArray<ts.ObjectLiteralElementLike>,
+  property: string
+) {
+  return properties.find(
+    (prop: ts.PropertyAssignment) => prop.name.getText() === property
   );
 }
 
