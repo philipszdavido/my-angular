@@ -33,7 +33,39 @@ export function extractComponentMetadata(decorator: ts.Decorator) {
 
   // templateUrl
   const templateUrl = getMetadataProperty(metadata.properties, "templateUrl");
-  const styleUrls = getMetadataProperty(metadata.properties, "templateUrl");
+  const styleUrls = getMetadataProperty(metadata.properties, "styleUrls");
+  const providers = getMetadataProperty(metadata.properties, "providers");
+  const animations = getMetadataProperty(metadata.properties, "animations");
+  const encapsulation = getMetadataProperty(
+    metadata.properties,
+    "encapsulation"
+  );
+  const changeDetection = getMetadataProperty(
+    metadata.properties,
+    "changeDetection"
+  );
+  const interpolation = getMetadataProperty(
+    metadata.properties,
+    "interpolation"
+  );
+  const preserveWhitespaces = getMetadataProperty(
+    metadata.properties,
+    "preserveWhitespaces"
+  );
+
+  return {
+    selector,
+    standalone,
+    template,
+    templateUrl,
+    styleUrls,
+    providers,
+    animations,
+    encapsulation,
+    changeDetection,
+    interpolation,
+    preserveWhitespaces,
+  };
 }
 
 function getMetadataProperty(
