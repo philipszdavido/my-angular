@@ -14,7 +14,10 @@ class NgComponent {
         };
     }
     static {
-        this.ɵcmp = i0.ɵɵdefineComponent({});
+        this.ɵcmp = i0.ɵɵdefineComponent({
+            type: NgComponent,
+            selectors: [["app-table"]]
+        });
     }
 }
 exports.NgComponent = NgComponent;

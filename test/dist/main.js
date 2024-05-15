@@ -28,7 +28,10 @@ class CcustomSlider {
         };
     }
     static {
-        this.ɵcmp = i0.ɵɵdefineComponent({});
+        this.ɵcmp = i0.ɵɵdefineComponent({
+            type: CcustomSlider,
+            selectors: [["app-table"]]
+        });
     }
 }
 exports.CcustomSlider = CcustomSlider;
@@ -60,7 +63,10 @@ class AppComponent {
         };
     }
     static {
-        this.ɵcmp = i0.ɵɵdefineComponent({});
+        this.ɵcmp = i0.ɵɵdefineComponent({
+            type: AppComponent,
+            selectors: [["app-table"]]
+        });
     }
 }
 exports.AppComponent = AppComponent;

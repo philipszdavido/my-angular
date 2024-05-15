@@ -1,5 +1,19 @@
 import * as ts from "typescript";
 
+type ComponentMetadata = {
+  selector: ts.ObjectLiteralElementLike;
+  standalone: ts.ObjectLiteralElementLike;
+  template: ts.ObjectLiteralElementLike;
+  templateUrl: ts.ObjectLiteralElementLike;
+  styleUrls: ts.ObjectLiteralElementLike;
+  providers: ts.ObjectLiteralElementLike;
+  animations: ts.ObjectLiteralElementLike;
+  encapsulation: ts.ObjectLiteralElementLike;
+  changeDetection: ts.ObjectLiteralElementLike;
+  interpolation: ts.ObjectLiteralElementLike;
+  preserveWhitespaces: ts.ObjectLiteralElementLike;
+};
+
 export function hasComponentDecorator(node: ts.ClassDeclaration) {
   const decorators = ts.getDecorators(node);
   return (
@@ -23,7 +37,9 @@ export function getComponentDecorator(node: ts.ClassDeclaration): ts.Decorator {
   );
 }
 
-export function extractComponentMetadata(decorator: ts.Decorator) {
+export function extractComponentMetadata(
+  decorator: ts.Decorator
+): ComponentMetadata {
   const metadata = (decorator.expression as ts.CallExpression)
     .arguments[0] as ts.ObjectLiteralExpression;
 
@@ -125,7 +141,10 @@ export function createFactoryStatic(componentName: string) {
 
   return /*createClassStaticBlock(*/ factory.createBlock([node], true); //);
 }
-export function createDefineComponentStatic() {
+export function createDefineComponentStatic(
+  componentName: string,
+  metadata: ComponentMetadata
+) {
   const factory = ts.factory;
 
   const node = factory.createExpressionStatement(
@@ -137,12 +156,50 @@ export function createDefineComponentStatic() {
           "ɵɵdefineComponent"
         ),
         undefined,
-        [factory.createObjectLiteralExpression()]
+        [
+          factory.createObjectLiteralExpression(
+            [...createCmpDefinitionPropertiesNode(componentName, metadata)],
+            true
+          ),
+        ]
       )
     )
   );
 
   return factory.createBlock([node], true);
+}
+
+function createCmpDefinitionPropertiesNode(
+  componentName: string,
+  metadata: ComponentMetadata
+): ts.ObjectLiteralElementLike[] {
+  const properties = [];
+
+  // type
+  properties.push(
+    ts.factory.createPropertyAssignment(
+      ts.factory.createIdentifier("type"),
+      ts.factory.createIdentifier(componentName)
+    )
+  );
+
+  // selector
+  properties.push(
+    ts.factory.createPropertyAssignment(
+      ts.factory.createIdentifier("selectors"),
+      ts.factory.createArrayLiteralExpression(
+        [
+          ts.factory.createArrayLiteralExpression(
+            [ts.factory.createStringLiteral("app-table")],
+            false
+          ),
+        ],
+        false
+      )
+    )
+  );
+
+  return properties;
 }
 
 export function updateClassDeclaration(

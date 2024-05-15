@@ -15,7 +15,10 @@ class LazyComponent {
         };
     }
     static {
-        this.ɵcmp = i0.ɵɵdefineComponent({});
+        this.ɵcmp = i0.ɵɵdefineComponent({
+            type: LazyComponent,
+            selectors: [["app-table"]]
+        });
     }
 }
 exports.LazyComponent = LazyComponent;

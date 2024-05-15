@@ -29,7 +29,10 @@ class HeavyComponent {
         };
     }
     static {
-        this.ɵcmp = i0.ɵɵdefineComponent({});
+        this.ɵcmp = i0.ɵɵdefineComponent({
+            type: HeavyComponent,
+            selectors: [["app-table"]]
+        });
     }
 }
 exports.HeavyComponent = HeavyComponent;

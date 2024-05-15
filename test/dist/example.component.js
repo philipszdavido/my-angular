@@ -39,7 +39,10 @@ class ExampleComponent {
         };
     }
     static {
-        this.ɵcmp = i0.ɵɵdefineComponent({});
+        this.ɵcmp = i0.ɵɵdefineComponent({
+            type: ExampleComponent,
+            selectors: [["app-table"]]
+        });
     }
 }
 exports.ExampleComponent = ExampleComponent;

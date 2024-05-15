@@ -19,11 +19,13 @@ export function transformPlugin(
       }
 
       if (ts.isClassDeclaration(node) && hasComponentDecorator(node)) {
-        extractComponentMetadata(getComponentDecorator(node));
+        const componentName = node.name?.text;
+
+        const metadata = extractComponentMetadata(getComponentDecorator(node));
 
         const factoryNode = createFactoryStatic(node.name?.text);
 
-        const cmpDefNode = createDefineComponentStatic();
+        const cmpDefNode = createDefineComponentStatic(componentName, metadata);
 
         return updateClassDeclaration(node, [factoryNode, cmpDefNode]);
       }

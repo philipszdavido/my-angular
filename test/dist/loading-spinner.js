@@ -14,7 +14,10 @@ class LoadingComponent {
         };
     }
     static {
-        this.ɵcmp = i0.ɵɵdefineComponent({});
+        this.ɵcmp = i0.ɵɵdefineComponent({
+            type: LoadingComponent,
+            selectors: [["app-table"]]
+        });
     }
 }
 exports.LoadingComponent = LoadingComponent;
