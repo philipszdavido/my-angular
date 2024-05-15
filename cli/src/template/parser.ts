@@ -1,5 +1,6 @@
 import ts = require("typescript");
 import { parse } from "node-html-parser";
+import { ViewGenerator } from "./viewGenerator";
 
 const parseConfig = {
   lowerCaseTagName: false, // convert tag name to lower case (hurts performance heavily)
@@ -40,8 +41,13 @@ export class Parser {
   parse(): ts.Statement {
     const el = parse(this.template, parseConfig);
 
-    console.log(el);
+    //console.log(el);
 
+    const html = this.template;
+
+    const generator = new ViewGenerator();
+    const viewCode = generator.generateViewCode(html);
+    console.log(viewCode);
     return ts.factory.createExpressionStatement(undefined);
   }
 }
