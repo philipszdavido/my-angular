@@ -41,6 +41,7 @@
     "html-tags": "^2.0.0",
     "htmlparser2": "^9.0.0",
     "incremental-dom": "^0.7.0",
+    "node-html-parser": "^6.1.13",
     "pluralize": "^7.0.0",
     "webpack": "^5.89.0",
     "webpack-dev-server": "^4.15.1"

@@ -1,4 +1,5 @@
 import * as ts from "typescript";
+import { Parser } from "./template/parser";
 
 type ComponentMetadata = {
   selector: ts.PropertyAssignment;
@@ -231,6 +232,9 @@ function createCmpDefinitionPropertiesNode(
 
     const templateString = (template.initializer as ts.StringLiteral).text;
 
+    const parser = new Parser(templateString);
+    const templateNode = parser.parse();
+
     properties.push(
       ts.factory.createPropertyAssignment(
         "template",
@@ -258,7 +262,7 @@ function createCmpDefinitionPropertiesNode(
             ),
           ],
           undefined,
-          ts.factory.createBlock([], true)
+          ts.factory.createBlock([templateNode], true)
         )
       )
     );

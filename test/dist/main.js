@@ -33,6 +33,7 @@ class CcustomSlider {
             selectors: [["ccustom-slider"]],
             standalone: true,
             template: function CcustomSlider_Template(rf, ctx) {
+                { }
             }
         });
     }
@@ -71,6 +72,7 @@ class AppComponent {
             selectors: [["app-root"]],
             standalone: true,
             template: function AppComponent_Template(rf, ctx) {
+                { }
             }
         });
     }
