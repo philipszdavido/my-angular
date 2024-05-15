@@ -33,5 +33,10 @@ class ExampleComponent {
     clickHandler() {
         this.countSig.update((value) => value + 1);
     }
+    static {
+        this.ɵfac = function UI_Factory(t) {
+            return new (t || UI)();
+        };
+    }
 }
 exports.ExampleComponent = ExampleComponent;

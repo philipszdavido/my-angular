@@ -22,6 +22,11 @@ class CcustomSlider {
     handleEvent(event) {
         this.changed.emit(90000);
     }
+    static {
+        this.ɵfac = function UI_Factory(t) {
+            return new (t || UI)();
+        };
+    }
 }
 exports.CcustomSlider = CcustomSlider;
 @(0, core_1.Component)({
@@ -45,6 +50,11 @@ class AppComponent {
     }
     saveVolume() {
         console.log("saveVolume");
+    }
+    static {
+        this.ɵfac = function UI_Factory(t) {
+            return new (t || UI)();
+        };
     }
 }
 exports.AppComponent = AppComponent;

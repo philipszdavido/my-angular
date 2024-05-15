@@ -9,5 +9,10 @@ const core_1 = require("@angular/core");
     imports: [],
 })
 class LazyComponent {
+    static {
+        this.ɵfac = function UI_Factory(t) {
+            return new (t || UI)();
+        };
+    }
 }
 exports.LazyComponent = LazyComponent;

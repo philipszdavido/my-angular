@@ -8,5 +8,10 @@ const core_1 = require("@angular/core");
     template: `hello Component`,
 })
 class NgComponent {
+    static {
+        this.ɵfac = function UI_Factory(t) {
+            return new (t || UI)();
+        };
+    }
 }
 exports.NgComponent = NgComponent;

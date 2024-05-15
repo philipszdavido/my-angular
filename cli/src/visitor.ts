@@ -1,5 +1,6 @@
 import * as ts from "typescript";
 import {
+  createFactoryStatic,
   extractComponentMetadata,
   getComponentDecorator,
   hasComponentDecorator,
@@ -14,6 +15,9 @@ export function transformPlugin(
     function visit(node: ts.Node): ts.Node {
       if (ts.isClassDeclaration(node) && hasComponentDecorator(node)) {
         extractComponentMetadata(getComponentDecorator(node));
+        const factoryNode = createFactoryStatic("UI");
+
+        return updateClassDeclaration(node, factoryNode);
       }
 
       return ts.visitEachChild(node, visit, context);

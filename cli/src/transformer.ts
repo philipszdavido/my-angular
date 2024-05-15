@@ -77,7 +77,59 @@ function getMetadataProperty(
   );
 }
 
-export function updateClassDeclaration(node: any, staticBlock: any) {
+export function createFactoryStatic(componentName: string) {
+  const factory = ts.factory;
+
+  const parameterName = "t";
+  const functionName = componentName + "_Factory";
+
+  const node = factory.createExpressionStatement(
+    factory.createAssignment(
+      factory.createPropertyAccessExpression(factory.createThis(), "ɵfac"),
+      factory.createFunctionExpression(
+        undefined,
+        undefined,
+        functionName,
+        undefined,
+        [
+          factory.createParameterDeclaration(
+            undefined,
+            undefined,
+            parameterName,
+            undefined,
+            undefined,
+            undefined
+          ),
+        ],
+        undefined,
+        factory.createBlock(
+          [
+            factory.createReturnStatement(
+              factory.createNewExpression(
+                factory.createParenthesizedExpression(
+                  factory.createLogicalOr(
+                    factory.createIdentifier(parameterName),
+                    factory.createIdentifier(componentName)
+                  )
+                ),
+                [],
+                []
+              )
+            ),
+          ],
+          true
+        )
+      )
+    )
+  );
+
+  return /*createClassStaticBlock(*/ factory.createBlock([node], true); //);
+}
+
+export function updateClassDeclaration(
+  node: ts.ClassDeclaration,
+  staticBlock: ts.Block
+) {
   return ts.factory.updateClassDeclaration(
     node,
     node.modifiers,
@@ -88,10 +140,10 @@ export function updateClassDeclaration(node: any, staticBlock: any) {
   );
 }
 
-export function transformComponentToIvy(node, context) {
+export function transformComponentToIvy(node) {
   const componentName = node.name.escapedText;
   const factory = ts.factory;
-  const decorator = getComponentDecorator(node);
+  // const decorator = getComponentDecorator(node);
 
   return factory.createBlock(
     [
@@ -394,4 +446,8 @@ export function transformComponentToIvy(node, context) {
     ],
     true
   );
+}
+
+export function createClassStaticBlock(node: ts.Block) {
+  return ts.factory.createClassStaticBlockDeclaration(node);
 }

@@ -23,6 +23,11 @@ class HeavyComponent {
     clickHandler() {
         this._count.update((value) => value + 100);
     }
+    static {
+        this.ɵfac = function UI_Factory(t) {
+            return new (t || UI)();
+        };
+    }
 }
 exports.HeavyComponent = HeavyComponent;
 /**
