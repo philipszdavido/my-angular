@@ -44,7 +44,7 @@ class ExampleComponent {
             selectors: [["app-table"]],
             standalone: true,
             template: function ExampleComponent_Template(rf, ctx) {
-                { }
+                if (rf && 1) { }
             }
         });
     }

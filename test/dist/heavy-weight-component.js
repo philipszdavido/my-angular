@@ -34,7 +34,7 @@ class HeavyComponent {
             selectors: [["heavy-weight-component"]],
             standalone: true,
             template: function HeavyComponent_Template(rf, ctx) {
-                { }
+                if (rf && 1) { }
             }
         });
     }

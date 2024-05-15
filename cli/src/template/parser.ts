@@ -48,6 +48,14 @@ export class Parser {
     const generator = new ViewGenerator();
     const viewCode = generator.generateViewCode(html);
     console.log(viewCode);
-    return ts.factory.createExpressionStatement(undefined);
+
+    return ts.factory.createIfStatement(
+      ts.factory.createLogicalAnd(
+        ts.factory.createIdentifier("rf"),
+        ts.factory.createIdentifier("1")
+      ),
+      ts.factory.createBlock([], true),
+      undefined
+    );
   }
 }

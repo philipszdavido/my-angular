@@ -19,7 +19,7 @@ class LoadingComponent {
             selectors: [["loading-spinner"]],
             standalone: true,
             template: function LoadingComponent_Template(rf, ctx) {
-                { }
+                if (rf && 1) { }
             }
         });
     }
