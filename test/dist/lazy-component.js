@@ -20,7 +20,9 @@ class LazyComponent {
             selectors: [["app-hello"]],
             standalone: true,
             template: function LazyComponent_Template(rf, ctx) {
-                if (rf && 1) { }
+                if (rf && 1) {
+                    i0.ɵɵtext(0, "I am Lazy");
+                }
             }
         });
     }

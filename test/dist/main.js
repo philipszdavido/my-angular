@@ -33,7 +33,12 @@ class CcustomSlider {
             selectors: [["ccustom-slider"]],
             standalone: true,
             template: function CcustomSlider_Template(rf, ctx) {
-                if (rf && 1) { }
+                if (rf && 1) {
+                    i0.ɵɵelementStart(1, "button", 2);
+                    i0.ɵɵtext(2, "Click Me");
+                    i0.ɵɵelementEnd();
+                    i0.ɵɵtext(2, "Slider");
+                }
             }
         });
     }
@@ -72,7 +77,14 @@ class AppComponent {
             selectors: [["app-root"]],
             standalone: true,
             template: function AppComponent_Template(rf, ctx) {
-                if (rf && 1) { }
+                if (rf && 1) {
+                    i0.ɵɵelementStart(1, "ccustom-slider", 2);
+                    i0.ɵɵtext(2);
+                    i0.ɵɵelementStart(4, "button", 5);
+                    i0.ɵɵtext(5, "Click Me");
+                    i0.ɵɵelementEnd();
+                    i0.ɵɵelementEnd();
+                }
             }
         });
     }

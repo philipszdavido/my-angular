@@ -34,7 +34,18 @@ class HeavyComponent {
             selectors: [["heavy-weight-component"]],
             standalone: true,
             template: function HeavyComponent_Template(rf, ctx) {
-                if (rf && 1) { }
+                if (rf && 1) {
+                    i0.ɵɵelementStart(4, "div");
+                    i0.ɵɵtext(5);
+                    i0.ɵɵelementEnd();
+                    i0.ɵɵelementStart(11, "div");
+                    i0.ɵɵtext(12);
+                    i0.ɵɵelementEnd();
+                    i0.ɵɵelementStart(22, "button", 23);
+                    i0.ɵɵtext(23, "Heavy Incr");
+                    i0.ɵɵelementEnd();
+                    i0.ɵɵelementEnd();
+                }
             }
         });
     }

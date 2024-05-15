@@ -19,7 +19,9 @@ class NgComponent {
             selectors: [["ng-component"]],
             standalone: true,
             template: function NgComponent_Template(rf, ctx) {
-                if (rf && 1) { }
+                if (rf && 1) {
+                    i0.ɵɵtext(0, "hello Component");
+                }
             }
         });
     }

@@ -41,20 +41,17 @@ export class Parser {
   parse(): ts.Statement {
     const el = parse(this.template, parseConfig);
 
-    //console.log(el);
-
     const html = this.template;
 
     const generator = new ViewGenerator();
-    const viewCode = generator.generateViewCode(html);
-    console.log(viewCode);
+    const { stmts } = generator.generateViewCode(html);
 
     return ts.factory.createIfStatement(
       ts.factory.createLogicalAnd(
         ts.factory.createIdentifier("rf"),
         ts.factory.createIdentifier("1")
       ),
-      ts.factory.createBlock([], true),
+      ts.factory.createBlock([...stmts], true),
       undefined
     );
   }
