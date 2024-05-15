@@ -24,8 +24,8 @@ class HeavyComponent {
         this._count.update((value) => value + 100);
     }
     static {
-        this.ɵfac = function UI_Factory(t) {
-            return new (t || UI)();
+        this.ɵfac = function HeavyComponent_Factory(t) {
+            return new (t || HeavyComponent)();
         };
     }
 }

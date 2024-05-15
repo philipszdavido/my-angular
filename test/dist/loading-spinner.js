@@ -9,8 +9,8 @@ const core_1 = require("@angular/core");
 })
 class LoadingComponent {
     static {
-        this.ɵfac = function UI_Factory(t) {
-            return new (t || UI)();
+        this.ɵfac = function LoadingComponent_Factory(t) {
+            return new (t || LoadingComponent)();
         };
     }
 }

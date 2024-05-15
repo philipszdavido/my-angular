@@ -23,8 +23,8 @@ class CcustomSlider {
         this.changed.emit(90000);
     }
     static {
-        this.ɵfac = function UI_Factory(t) {
-            return new (t || UI)();
+        this.ɵfac = function CcustomSlider_Factory(t) {
+            return new (t || CcustomSlider)();
         };
     }
 }
@@ -52,8 +52,8 @@ class AppComponent {
         console.log("saveVolume");
     }
     static {
-        this.ɵfac = function UI_Factory(t) {
-            return new (t || UI)();
+        this.ɵfac = function AppComponent_Factory(t) {
+            return new (t || AppComponent)();
         };
     }
 }

@@ -10,8 +10,8 @@ const core_1 = require("@angular/core");
 })
 class LazyComponent {
     static {
-        this.ɵfac = function UI_Factory(t) {
-            return new (t || UI)();
+        this.ɵfac = function LazyComponent_Factory(t) {
+            return new (t || LazyComponent)();
         };
     }
 }

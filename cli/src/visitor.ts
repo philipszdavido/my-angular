@@ -15,7 +15,8 @@ export function transformPlugin(
     function visit(node: ts.Node): ts.Node {
       if (ts.isClassDeclaration(node) && hasComponentDecorator(node)) {
         extractComponentMetadata(getComponentDecorator(node));
-        const factoryNode = createFactoryStatic("UI");
+
+        const factoryNode = createFactoryStatic(node.name?.text);
 
         return updateClassDeclaration(node, factoryNode);
       }
