@@ -13,5 +13,8 @@ class NgComponent {
             return new (t || NgComponent)();
         };
     }
+    static {
+        this.ɵcmp = i0.ɵɵdefineComponent({});
+    }
 }
 exports.NgComponent = NgComponent;

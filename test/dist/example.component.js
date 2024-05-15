@@ -38,5 +38,8 @@ class ExampleComponent {
             return new (t || ExampleComponent)();
         };
     }
+    static {
+        this.ɵcmp = i0.ɵɵdefineComponent({});
+    }
 }
 exports.ExampleComponent = ExampleComponent;

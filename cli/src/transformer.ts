@@ -125,18 +125,41 @@ export function createFactoryStatic(componentName: string) {
 
   return /*createClassStaticBlock(*/ factory.createBlock([node], true); //);
 }
+export function createDefineComponentStatic() {
+  const factory = ts.factory;
+
+  const node = factory.createExpressionStatement(
+    factory.createAssignment(
+      factory.createPropertyAccessExpression(factory.createThis(), "ɵcmp"),
+      factory.createCallExpression(
+        factory.createPropertyAccessExpression(
+          factory.createIdentifier("i0"),
+          "ɵɵdefineComponent"
+        ),
+        undefined,
+        [factory.createObjectLiteralExpression()]
+      )
+    )
+  );
+
+  return factory.createBlock([node], true);
+}
 
 export function updateClassDeclaration(
   node: ts.ClassDeclaration,
-  staticBlock: ts.Block
+  staticBlocks: ts.Block[]
 ) {
+  const blocks = staticBlocks.map((staticBlock) =>
+    ts.factory.createClassStaticBlockDeclaration(staticBlock)
+  );
+
   return ts.factory.updateClassDeclaration(
     node,
     node.modifiers,
     node.name,
     node.typeParameters,
     node.heritageClauses,
-    [...node.members, ts.factory.createClassStaticBlockDeclaration(staticBlock)]
+    [...node.members, ...blocks]
   );
 }
 

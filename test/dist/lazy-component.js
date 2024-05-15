@@ -14,5 +14,8 @@ class LazyComponent {
             return new (t || LazyComponent)();
         };
     }
+    static {
+        this.ɵcmp = i0.ɵɵdefineComponent({});
+    }
 }
 exports.LazyComponent = LazyComponent;

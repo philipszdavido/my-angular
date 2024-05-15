@@ -28,6 +28,9 @@ class HeavyComponent {
             return new (t || HeavyComponent)();
         };
     }
+    static {
+        this.ɵcmp = i0.ɵɵdefineComponent({});
+    }
 }
 exports.HeavyComponent = HeavyComponent;
 /**

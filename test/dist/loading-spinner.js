@@ -13,5 +13,8 @@ class LoadingComponent {
             return new (t || LoadingComponent)();
         };
     }
+    static {
+        this.ɵcmp = i0.ɵɵdefineComponent({});
+    }
 }
 exports.LoadingComponent = LoadingComponent;

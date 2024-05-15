@@ -27,6 +27,9 @@ class CcustomSlider {
             return new (t || CcustomSlider)();
         };
     }
+    static {
+        this.ɵcmp = i0.ɵɵdefineComponent({});
+    }
 }
 exports.CcustomSlider = CcustomSlider;
 @(0, core_1.Component)({
@@ -55,6 +58,9 @@ class AppComponent {
         this.ɵfac = function AppComponent_Factory(t) {
             return new (t || AppComponent)();
         };
+    }
+    static {
+        this.ɵcmp = i0.ɵɵdefineComponent({});
     }
 }
 exports.AppComponent = AppComponent;

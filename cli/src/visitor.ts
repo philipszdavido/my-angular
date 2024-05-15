@@ -1,5 +1,6 @@
 import * as ts from "typescript";
 import {
+  createDefineComponentStatic,
   createFactoryStatic,
   extractComponentMetadata,
   getComponentDecorator,
@@ -13,12 +14,18 @@ export function transformPlugin(
 ): ts.TransformerFactory<ts.SourceFile> | ts.CustomTransformerFactory {
   return (context): any => {
     function visit(node: ts.Node): ts.Node {
+      if (ts.isDecorator(node)) {
+        return ts.visitEachChild(node, visit, context);
+      }
+
       if (ts.isClassDeclaration(node) && hasComponentDecorator(node)) {
         extractComponentMetadata(getComponentDecorator(node));
 
         const factoryNode = createFactoryStatic(node.name?.text);
 
-        return updateClassDeclaration(node, factoryNode);
+        const cmpDefNode = createDefineComponentStatic();
+
+        return updateClassDeclaration(node, [factoryNode, cmpDefNode]);
       }
 
       return ts.visitEachChild(node, visit, context);
