@@ -41,7 +41,10 @@ class ExampleComponent {
     static {
         this.ɵcmp = i0.ɵɵdefineComponent({
             type: ExampleComponent,
-            selectors: [["app-table"]]
+            selectors: [["app-table"]],
+            standalone: true,
+            template: function ExampleComponent_Template(rf, ctx) {
+            }
         });
     }
 }

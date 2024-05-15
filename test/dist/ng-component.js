@@ -16,7 +16,10 @@ class NgComponent {
     static {
         this.ɵcmp = i0.ɵɵdefineComponent({
             type: NgComponent,
-            selectors: [["app-table"]]
+            selectors: [["ng-component"]],
+            standalone: true,
+            template: function NgComponent_Template(rf, ctx) {
+            }
         });
     }
 }

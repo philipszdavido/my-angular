@@ -31,7 +31,10 @@ class HeavyComponent {
     static {
         this.ɵcmp = i0.ɵɵdefineComponent({
             type: HeavyComponent,
-            selectors: [["app-table"]]
+            selectors: [["heavy-weight-component"]],
+            standalone: true,
+            template: function HeavyComponent_Template(rf, ctx) {
+            }
         });
     }
 }

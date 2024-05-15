@@ -17,7 +17,10 @@ class LazyComponent {
     static {
         this.ɵcmp = i0.ɵɵdefineComponent({
             type: LazyComponent,
-            selectors: [["app-table"]]
+            selectors: [["app-hello"]],
+            standalone: true,
+            template: function LazyComponent_Template(rf, ctx) {
+            }
         });
     }
 }

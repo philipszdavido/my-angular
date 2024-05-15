@@ -1,9 +1,9 @@
 import * as ts from "typescript";
 
 type ComponentMetadata = {
-  selector: ts.ObjectLiteralElementLike;
+  selector: ts.PropertyAssignment;
   standalone: ts.ObjectLiteralElementLike;
-  template: ts.ObjectLiteralElementLike;
+  template: ts.PropertyAssignment;
   templateUrl: ts.ObjectLiteralElementLike;
   styleUrls: ts.ObjectLiteralElementLike;
   providers: ts.ObjectLiteralElementLike;
@@ -43,9 +43,15 @@ export function extractComponentMetadata(
   const metadata = (decorator.expression as ts.CallExpression)
     .arguments[0] as ts.ObjectLiteralExpression;
 
-  const selector = getMetadataProperty(metadata.properties, "selector");
+  const selector = getMetadataProperty(
+    metadata.properties,
+    "selector"
+  ) as ts.PropertyAssignment;
   const standalone = getMetadataProperty(metadata.properties, "standalone");
-  const template = getMetadataProperty(metadata.properties, "template");
+  const template = getMetadataProperty(
+    metadata.properties,
+    "template"
+  ) as ts.PropertyAssignment;
 
   // templateUrl
   const templateUrl = getMetadataProperty(metadata.properties, "templateUrl");
@@ -184,13 +190,15 @@ function createCmpDefinitionPropertiesNode(
   );
 
   // selector
+  const selector = (metadata.selector.initializer as ts.StringLiteral).text;
+
   properties.push(
     ts.factory.createPropertyAssignment(
       ts.factory.createIdentifier("selectors"),
       ts.factory.createArrayLiteralExpression(
         [
           ts.factory.createArrayLiteralExpression(
-            [ts.factory.createStringLiteral("app-table")],
+            [ts.factory.createStringLiteral(selector)],
             false
           ),
         ],
@@ -198,6 +206,63 @@ function createCmpDefinitionPropertiesNode(
       )
     )
   );
+
+  // standalone
+  if (metadata.standalone) {
+    properties.push(
+      ts.factory.createPropertyAssignment("standalone", ts.factory.createTrue())
+    );
+  } else {
+    properties.push(
+      ts.factory.createPropertyAssignment(
+        "standalone",
+        ts.factory.createFalse()
+      )
+    );
+  }
+
+  // template
+  const template = metadata.template;
+
+  if (template) {
+    const context = "ctx";
+    const renderFlag = "rf";
+    const functionName = componentName + "_Template";
+
+    const templateString = (template.initializer as ts.StringLiteral).text;
+
+    properties.push(
+      ts.factory.createPropertyAssignment(
+        "template",
+        ts.factory.createFunctionExpression(
+          undefined,
+          undefined,
+          functionName,
+          undefined,
+          [
+            ts.factory.createParameterDeclaration(
+              undefined,
+              undefined,
+              renderFlag,
+              undefined,
+              undefined,
+              undefined
+            ),
+            ts.factory.createParameterDeclaration(
+              undefined,
+              undefined,
+              context,
+              undefined,
+              undefined,
+              undefined
+            ),
+          ],
+          undefined,
+          ts.factory.createBlock([], true)
+        )
+      )
+    );
+  }
 
   return properties;
 }

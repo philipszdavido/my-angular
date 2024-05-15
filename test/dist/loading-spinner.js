@@ -16,7 +16,10 @@ class LoadingComponent {
     static {
         this.ɵcmp = i0.ɵɵdefineComponent({
             type: LoadingComponent,
-            selectors: [["app-table"]]
+            selectors: [["loading-spinner"]],
+            standalone: true,
+            template: function LoadingComponent_Template(rf, ctx) {
+            }
         });
     }
 }

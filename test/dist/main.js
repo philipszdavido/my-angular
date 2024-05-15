@@ -30,7 +30,10 @@ class CcustomSlider {
     static {
         this.ɵcmp = i0.ɵɵdefineComponent({
             type: CcustomSlider,
-            selectors: [["app-table"]]
+            selectors: [["ccustom-slider"]],
+            standalone: true,
+            template: function CcustomSlider_Template(rf, ctx) {
+            }
         });
     }
 }
@@ -65,7 +68,10 @@ class AppComponent {
     static {
         this.ɵcmp = i0.ɵɵdefineComponent({
             type: AppComponent,
-            selectors: [["app-table"]]
+            selectors: [["app-root"]],
+            standalone: true,
+            template: function AppComponent_Template(rf, ctx) {
+            }
         });
     }
 }
