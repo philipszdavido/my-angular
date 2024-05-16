@@ -14,6 +14,7 @@ class ViewGenerator {
   private options: ViewGeneratorOptions;
 
   private stmts: ts.ExpressionStatement[] = [];
+  private updateStmts: ts.ExpressionStatement[] = [];
 
   constructor(options: ViewGeneratorOptions = {}) {
     this.options = options;
@@ -80,6 +81,9 @@ class ViewGenerator {
         // Property binding
         const propertyName = attr.slice(1, -1);
         creation += `, ${index + 1}`;
+
+        this.stmts.push(generateElementStartNode(index, tag, index + 1));
+
         update += `i0.ɵɵproperty("${propertyName}", ctx.${attributes[attr]});\n`;
       } else {
         attrArray.push(`"${attr}", "${attributes[attr]}"`);
