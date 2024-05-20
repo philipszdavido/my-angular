@@ -53,6 +53,9 @@ class ExampleComponent {
                     i0.ɵɵelementEnd();
                     i0.ɵɵelementEnd();
                 }
+                if (rf && 2) {
+                    ɵɵadvance.i0(2);
+                }
             }
         });
     }

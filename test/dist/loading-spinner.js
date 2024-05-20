@@ -22,6 +22,8 @@ class LoadingComponent {
                 if (rf && 1) {
                     i0.ɵɵtext(0, "Loading...");
                 }
+                if (rf && 2) {
+                }
             }
         });
     }

@@ -5,6 +5,7 @@ import { parseDocument } from "htmlparser2";
 import { Element, Node, Text } from "domhandler";
 import { camelCase } from "lodash";
 import ts = require("typescript");
+import {factory} from "typescript";
 
 interface ViewGeneratorOptions {
   // Add any configuration options here
@@ -19,6 +20,7 @@ class ViewGenerator {
   constructor(options: ViewGeneratorOptions = {}) {
     this.options = options;
     this.stmts = [];
+    this.updateStmts = []
   }
 
   generateViewCode(html: string) {
@@ -36,6 +38,7 @@ class ViewGenerator {
 
     return {
       stmts: this.stmts,
+      updateStmts: this.updateStmts,
       codeString: this.wrapCode(creationCode, updateCode),
     };
   }
@@ -129,7 +132,10 @@ class ViewGenerator {
 
         this.stmts.push(generateTextNode(index));
 
-        this.updateStmts.push(generateTextNode(index, text));
+        this.updateStmts.push(generateAdvanceNode(index.toString()));
+        // this.updateStmts.push(generateTextInterpolateNode(bindingExpression))
+
+        console.log(bindingExpression, text, matches)
 
 
         return {
@@ -267,10 +273,18 @@ function generatePropertyNode(propertyName: string, value: string) {
 }
 
 
-function generateAdvanceNode(index: number) {
-
+function generateAdvanceNode(index: string) {
+  return factory.createExpressionStatement(factory.createCallExpression(
+      factory.createPropertyAccessExpression(
+          factory.createIdentifier("i0"),
+          "ɵɵadvance"
+      ), undefined,
+      [
+          factory.createIdentifier(index)
+      ]
+  ))
 }
 
-function generateTextInterpolateNode() {
+function generateTextInterpolateNode(bindingExpression: string) {
 
 }

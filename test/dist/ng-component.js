@@ -22,6 +22,8 @@ class NgComponent {
                 if (rf && 1) {
                     i0.ɵɵtext(0, "hello Component");
                 }
+                if (rf && 2) {
+                }
             }
         });
     }

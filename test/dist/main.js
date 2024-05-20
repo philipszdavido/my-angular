@@ -40,6 +40,8 @@ class CcustomSlider {
                     i0.ɵɵelementEnd();
                     i0.ɵɵtext(2, "Slider");
                 }
+                if (rf && 2) {
+                }
             }
         });
     }
@@ -87,6 +89,9 @@ class AppComponent {
                     i0.ɵɵtext(5, "Click Me");
                     i0.ɵɵelementEnd();
                     i0.ɵɵelementEnd();
+                }
+                if (rf && 2) {
+                    ɵɵadvance.i0(2);
                 }
             }
         });

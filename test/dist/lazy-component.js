@@ -23,6 +23,8 @@ class LazyComponent {
                 if (rf && 1) {
                     i0.ɵɵtext(0, "I am Lazy");
                 }
+                if (rf && 2) {
+                }
             }
         });
     }

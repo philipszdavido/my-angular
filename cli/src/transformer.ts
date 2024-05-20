@@ -262,7 +262,7 @@ function createCmpDefinitionPropertiesNode(
             ),
           ],
           undefined,
-          ts.factory.createBlock([templateNode], true)
+          templateNode
         )
       )
     );

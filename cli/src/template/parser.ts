@@ -1,6 +1,7 @@
 import ts = require("typescript");
 import { parse } from "node-html-parser";
 import { ViewGenerator } from "./viewGenerator";
+import {factory} from "typescript";
 
 const parseConfig = {
   lowerCaseTagName: false, // convert tag name to lower case (hurts performance heavily)
@@ -38,15 +39,16 @@ export class Parser {
     this.template = template;
   }
 
-  parse(): ts.Statement {
+  parse() {
     const el = parse(this.template, parseConfig);
 
     const html = this.template;
 
     const generator = new ViewGenerator();
-    const { stmts } = generator.generateViewCode(html);
+    const { stmts, updateStmts } = generator.generateViewCode(html);
 
-    return ts.factory.createIfStatement(
+
+   const creationNode = ts.factory.createIfStatement(
       ts.factory.createLogicalAnd(
         ts.factory.createIdentifier("rf"),
         ts.factory.createIdentifier("1")
@@ -54,5 +56,17 @@ export class Parser {
       ts.factory.createBlock([...stmts], true),
       undefined
     );
+
+   const updateNode = factory.createIfStatement(
+       factory.createLogicalAnd(
+           factory.createIdentifier("rf"),
+           factory.createIdentifier("2")
+       ),
+       factory.createBlock([...updateStmts], true),
+       undefined
+   )
+
+    return ts.factory.createBlock([creationNode, updateNode], true)
+
   }
 }
