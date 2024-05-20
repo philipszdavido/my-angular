@@ -54,7 +54,8 @@ class ExampleComponent {
                     i0.ɵɵelementEnd();
                 }
                 if (rf && 2) {
-                    ɵɵadvance.i0(2);
+                    i0.ɵɵadvance(2);
+                    i0.ɵɵtextInterpolate(countSig());
                 }
             }
         });

@@ -6,9 +6,15 @@ import { Element, Node, Text } from "domhandler";
 import { camelCase } from "lodash";
 import ts = require("typescript");
 import {factory} from "typescript";
+import {ExpressionParser} from "../expr_parser/expr_parser";
 
 interface ViewGeneratorOptions {
   // Add any configuration options here
+}
+
+type InterpolationType = {
+  type: 'text' | 'expression',
+  content: string
 }
 
 class ViewGenerator {
@@ -66,10 +72,7 @@ class ViewGenerator {
     let update = "";
     const attrArray = [];
 
-    console.log(tag, attributes)
-
     this.stmts.push(generateElementStartNode(index, tag, Object.keys(attributes).length == 0 ? null : index + 1));
-
 
     // Process attributes
     for (const attr in attributes) {
@@ -77,8 +80,6 @@ class ViewGenerator {
         // Event binding
         const eventName = attr.slice(1, -1);
         creation += `, ${index + 1}`;
-
-        //this.stmts.push(generateElementStartNode(index, tag, index + 1));
 
         creation += `);\ni0.ɵɵlistener("${eventName}", function ${tag}_Template_${eventName}_${index}_listener() { return ctx.${attributes[attr]}(); })`;
         this.stmts.push(
@@ -133,9 +134,9 @@ class ViewGenerator {
         this.stmts.push(generateTextNode(index));
 
         this.updateStmts.push(generateAdvanceNode(index.toString()));
-        // this.updateStmts.push(generateTextInterpolateNode(bindingExpression))
+        this.updateStmts.push(generateTextInterpolateNode(this.parseInterpolations(text)))
 
-        console.log(bindingExpression, text, matches)
+        console.log(text, matches, this.parseInterpolations(text))
 
 
         return {
@@ -151,6 +152,24 @@ class ViewGenerator {
       }
     }
     return { creation: "", update: "" };
+  }
+
+  parseInterpolations(input: string): Array<InterpolationType> {
+    const regex = /{{(.*?)}}|([^{{}}]+)/g;
+    const result: Array<{ type: 'text' | 'expression', content: string }> = [];
+    let match;
+
+    while ((match = regex.exec(input)) !== null) {
+      if (match[1] !== undefined) {
+        // This is an expression match
+        result.push({ type: 'expression', content: match[1].trim() });
+      } else if (match[2] !== undefined) {
+        // This is a text match
+        result.push({ type: 'text', content: match[2].trim() });
+      }
+    }
+
+    return result;
   }
 
   private wrapCode(creationCode: string, updateCode: string): string {
@@ -272,7 +291,6 @@ function generatePropertyNode(propertyName: string, value: string) {
     )
 }
 
-
 function generateAdvanceNode(index: string) {
   return factory.createExpressionStatement(factory.createCallExpression(
       factory.createPropertyAccessExpression(
@@ -285,6 +303,26 @@ function generateAdvanceNode(index: string) {
   ))
 }
 
-function generateTextInterpolateNode(bindingExpression: string) {
+function generateTextInterpolateNode(bindingExpressions: InterpolationType[]) {
 
+  const exprParser = new ExpressionParser();
+
+  const bindingExpressionStmts = bindingExpressions.map((binding) => {
+    if (binding.type === 'text') {
+      return factory.createStringLiteral(binding.content)
+    } else if (binding.type === 'expression') {
+      exprParser.parse(binding.content)
+          return factory.createIdentifier(binding.content)
+    }
+  })
+
+    return factory.createExpressionStatement(factory.createCallExpression(
+        factory.createPropertyAccessExpression(
+            factory.createIdentifier("i0"),
+            "ɵɵtextInterpolate"
+        ), undefined,
+        [
+            ...bindingExpressionStmts
+        ]
+    ))
 }

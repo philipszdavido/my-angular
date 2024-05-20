@@ -49,8 +49,10 @@ class HeavyComponent {
                     i0.ɵɵelementEnd();
                 }
                 if (rf && 2) {
-                    ɵɵadvance.i0(5);
-                    ɵɵadvance.i0(12);
+                    i0.ɵɵadvance(5);
+                    i0.ɵɵtextInterpolate("Heavy Count:", _count());
+                    i0.ɵɵadvance(12);
+                    i0.ɵɵtextInterpolate("Double Count:", doubleCount());
                 }
             }
         });
