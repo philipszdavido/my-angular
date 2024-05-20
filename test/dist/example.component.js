@@ -45,8 +45,10 @@ class ExampleComponent {
             standalone: true,
             template: function ExampleComponent_Template(rf, ctx) {
                 if (rf && 1) {
+                    i0.ɵɵelementStart(1, "div", 2);
                     i0.ɵɵtext(2);
                     i0.ɵɵelementStart(4, "button", 5);
+                    i0.ɵɵlistener("click", () => ctx.clickHandler()());
                     i0.ɵɵtext(5, "Increment");
                     i0.ɵɵelementEnd();
                     i0.ɵɵelementEnd();

@@ -35,6 +35,7 @@ class CcustomSlider {
             template: function CcustomSlider_Template(rf, ctx) {
                 if (rf && 1) {
                     i0.ɵɵelementStart(1, "button", 2);
+                    i0.ɵɵlistener("click", () => ctx.handleEvent('click')());
                     i0.ɵɵtext(2, "Click Me");
                     i0.ɵɵelementEnd();
                     i0.ɵɵtext(2, "Slider");
@@ -79,8 +80,10 @@ class AppComponent {
             template: function AppComponent_Template(rf, ctx) {
                 if (rf && 1) {
                     i0.ɵɵelementStart(1, "ccustom-slider", 2);
+                    i0.ɵɵlistener("valuechanged", () => ctx.saveVolume()());
                     i0.ɵɵtext(2);
                     i0.ɵɵelementStart(4, "button", 5);
+                    i0.ɵɵlistener("click", () => ctx.handleEvent('click')());
                     i0.ɵɵtext(5, "Click Me");
                     i0.ɵɵelementEnd();
                     i0.ɵɵelementEnd();

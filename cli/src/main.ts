@@ -2,7 +2,7 @@ import * as glob from "glob";
 import * as ts from "typescript";
 import { transformPlugin } from "./visitor";
 
-process.chdir("/Users/chidumennamdi/Documents/developerse/my-angular/test");
+process.chdir("/Users/chidumennamdi/Downloads/MacBookPro2020/developerse/my-angular/test")
 
 const currentDirectory = process.cwd();
 console.log("Current Directory:", currentDirectory);

@@ -63,9 +63,10 @@ class ViewGenerator {
     let update = "";
     const attrArray = [];
 
-    if (!Object.keys(attributes).length) {
-      this.stmts.push(generateElementStartNode(index, tag));
-    }
+    console.log(tag, attributes)
+
+    this.stmts.push(generateElementStartNode(index, tag, Object.keys(attributes).length == 0 ? null : index + 1));
+
 
     // Process attributes
     for (const attr in attributes) {
@@ -74,15 +75,18 @@ class ViewGenerator {
         const eventName = attr.slice(1, -1);
         creation += `, ${index + 1}`;
 
-        this.stmts.push(generateElementStartNode(index, tag, index + 1));
+        //this.stmts.push(generateElementStartNode(index, tag, index + 1));
 
         creation += `);\ni0.ɵɵlistener("${eventName}", function ${tag}_Template_${eventName}_${index}_listener() { return ctx.${attributes[attr]}(); })`;
+        this.stmts.push(
+            generateListenerNode(eventName, tag, index + 1, attributes[attr])
+        )
       } else if (attr.startsWith("[")) {
         // Property binding
         const propertyName = attr.slice(1, -1);
         creation += `, ${index + 1}`;
 
-        this.stmts.push(generateElementStartNode(index, tag, index + 1));
+        this.updateStmts.push(generatePropertyNode(propertyName, attributes[attr]));
 
         update += `i0.ɵɵproperty("${propertyName}", ctx.${attributes[attr]});\n`;
       } else {
@@ -124,6 +128,9 @@ class ViewGenerator {
         const bindingExpression = matches[1].trim();
 
         this.stmts.push(generateTextNode(index));
+
+        this.updateStmts.push(generateTextNode(index, text));
+
 
         return {
           creation: `i0.ɵɵtext(${index});\n`,
@@ -213,4 +220,57 @@ function generateTextNode(index: number, text?: string) {
       params
     )
   );
+}
+
+
+function generateListenerNode(eventName: string, tag: string, index: number, handler: string) {
+  return ts.factory.createExpressionStatement(
+    ts.factory.createCallExpression(
+      ts.factory.createPropertyAccessExpression(
+        ts.factory.createIdentifier("i0"),
+        ts.factory.createIdentifier("ɵɵlistener")
+      ),
+      undefined,
+      [
+        ts.factory.createStringLiteral(eventName),
+        ts.factory.createArrowFunction(
+          undefined,
+          undefined,
+          [],
+          undefined,
+          ts.factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
+          ts.factory.createCallExpression(
+            ts.factory.createPropertyAccessExpression(
+              ts.factory.createIdentifier("ctx"),
+              ts.factory.createIdentifier(handler)
+            ),
+            undefined,
+            []
+          )
+        )
+      ]
+    )
+  )
+}
+
+function generatePropertyNode(propertyName: string, value: string) {
+    return ts.factory.createExpressionStatement(
+        ts.factory.createCallExpression(
+        ts.factory.createPropertyAccessExpression(
+            ts.factory.createIdentifier("i0"),
+            ts.factory.createIdentifier("ɵɵproperty")
+        ),
+        undefined,
+        []
+        )
+    )
+}
+
+
+function generateAdvanceNode(index: number) {
+
+}
+
+function generateTextInterpolateNode() {
+
 }
