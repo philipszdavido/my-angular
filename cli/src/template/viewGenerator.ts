@@ -136,7 +136,7 @@ class ViewGenerator {
         this.updateStmts.push(generateAdvanceNode(index.toString()));
         this.updateStmts.push(generateTextInterpolateNode(this.parseInterpolations(text)))
 
-        console.log(text, matches, this.parseInterpolations(text))
+        //console.log(text, matches, this.parseInterpolations(text))
 
 
         return {
@@ -311,18 +311,23 @@ function generateTextInterpolateNode(bindingExpressions: InterpolationType[]) {
     if (binding.type === 'text') {
       return factory.createStringLiteral(binding.content)
     } else if (binding.type === 'expression') {
-      exprParser.parse(binding.content)
-          return factory.createIdentifier(binding.content)
+      const transformedNode = exprParser.parse(binding.content);
+      // @ts-ignore
+      return transformedNode.statements[0].expression;
     }
-  })
+  }).filter(Boolean)
 
-    return factory.createExpressionStatement(factory.createCallExpression(
+    // @ts-ignore
+  const expre = factory.createExpressionStatement(factory.createCallExpression(
         factory.createPropertyAccessExpression(
             factory.createIdentifier("i0"),
             "ɵɵtextInterpolate"
         ), undefined,
+        // @ts-ignore
         [
-            ...bindingExpressionStmts
+            // @ts-ignore
+          ...bindingExpressionStmts
         ]
     ))
+    return expre
 }

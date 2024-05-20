@@ -1,30 +1,49 @@
 import * as ts from "typescript";
+import { factory, Identifier } from "typescript";
 
 function transformer(context: ts.TransformationContext): ts.Transformer<ts.SourceFile> {
-    return (sourceFile: ts.SourceFile): any => {
+    return (sourceFile: ts.SourceFile): ts.SourceFile => {
         function visitor(node: ts.Node): ts.Node {
 
             if (ts.isCallExpression(node)) {
-                console.log('Identifier found:', node);
+                const callExpressionNode = node as ts.CallExpression;
+
+                const identifierNode = factory.createIdentifier("ctx");
+
+                return factory.createCallExpression(
+                    factory.createPropertyAccessExpression(
+                        identifierNode,
+                        (callExpressionNode.expression as Identifier).escapedText.toString()
+                    ),
+                    undefined,
+                    []
+                );
             }
 
-            if(ts.isBinaryExpression(node)) {
-                console.log('Binary expression found:', node);
+            if (ts.isBinaryExpression(node)) {
             }
 
             return ts.visitEachChild(node, visitor, context);
         }
-        return ts.visitNode(sourceFile, visitor);
+        return <ts.SourceFile>ts.visitNode(sourceFile, visitor);
     };
 }
 
 export class ExpressionParser {
-    parse(source: string) {
+    parse(source: string): ts.SourceFile {
+        // Create a SourceFile object
+        const sourceFile = ts.createSourceFile("example.ts", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
 
-        let result = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS }, transformers: {
-            before: [transformer] }});
+        // Apply the transformation
+        const result = ts.transform(sourceFile, [transformer]);
 
-        console.log(JSON.stringify(result));
+        // Get the transformed source file
+        const transformedSourceFile = result.transformed[0] as ts.SourceFile;
 
+        // Clean up the transformation result
+        result.dispose();
+
+        // Return the transformed SourceFile node
+        return transformedSourceFile;
     }
 }
