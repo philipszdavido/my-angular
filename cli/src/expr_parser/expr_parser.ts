@@ -16,11 +16,30 @@ function transformer(context: ts.TransformationContext): ts.Transformer<ts.Sourc
                         (callExpressionNode.expression as Identifier).escapedText.toString()
                     ),
                     undefined,
-                    []
+                    [...callExpressionNode.arguments]
                 );
             }
 
             if (ts.isBinaryExpression(node)) {
+                const binaryExpressionNode = node as ts.BinaryExpression;
+
+                const operatorToken = binaryExpressionNode.operatorToken
+
+                if (operatorToken.kind === ts.SyntaxKind.BarToken) {
+                    // it is a pipe
+                    return factory.createCallExpression(
+                        factory.createPropertyAccessExpression(
+                            factory.createIdentifier("i0"),
+                            "ɵɵpipeBind"
+                        ),
+                        undefined,
+                        []
+                    )
+                }
+            }
+
+            if(ts.isVariableStatement(node)) {
+
             }
 
             return ts.visitEachChild(node, visitor, context);

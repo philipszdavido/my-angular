@@ -55,7 +55,7 @@ export class CcustomSlider {
     <custom-slider (valueChanged)="saveVolume()" />
     Signal Count {{ count() }}
 
-    Observable Count: {{ count$ | async }}
+    Observable Count: {{ count$ | async }} {{test$ | async}}
 
     <button (click)="handleEvent('click')">Click Me</button>
   `,
@@ -63,6 +63,7 @@ export class CcustomSlider {
 export class AppComponent {
   count = count;
   count$ = toObservable(count);
+  test$ = toObservable(count)
 
   handleEvent(event: string) {
     count.set(90000);

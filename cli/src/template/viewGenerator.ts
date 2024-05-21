@@ -136,9 +136,6 @@ class ViewGenerator {
         this.updateStmts.push(generateAdvanceNode(index.toString()));
         this.updateStmts.push(generateTextInterpolateNode(this.parseInterpolations(text)))
 
-        //console.log(text, matches, this.parseInterpolations(text))
-
-
         return {
           creation: `i0.ɵɵtext(${index});\n`,
           update: `i0.ɵɵadvance(${index});\ni0.ɵɵtextInterpolate(ctx.${bindingExpression});\n`,
@@ -318,7 +315,7 @@ function generateTextInterpolateNode(bindingExpressions: InterpolationType[]) {
   }).filter(Boolean)
 
     // @ts-ignore
-  const expre = factory.createExpressionStatement(factory.createCallExpression(
+  const expressionStatement = factory.createExpressionStatement(factory.createCallExpression(
         factory.createPropertyAccessExpression(
             factory.createIdentifier("i0"),
             "ɵɵtextInterpolate"
@@ -329,5 +326,5 @@ function generateTextInterpolateNode(bindingExpressions: InterpolationType[]) {
           ...bindingExpressionStmts
         ]
     ))
-    return expre
+    return expressionStatement
 }
