@@ -1,6 +1,6 @@
 import * as ts from "typescript";
 import { factory, Identifier } from "typescript";
-// import * as ts from 'typescript';
+import {createTransformer} from "./parse";
 
 function transformer(context: ts.TransformationContext): ts.Transformer<ts.SourceFile> {
     return (sourceFile: ts.SourceFile): ts.SourceFile => {
@@ -65,7 +65,7 @@ export class ExpressionParser {
         const sourceFile = ts.createSourceFile("example.ts", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
 
         // Apply the transformation
-        const result = ts.transform(sourceFile, [transformer]);
+        const result = ts.transform(sourceFile, [createTransformer("ctx")]);
 
         // Get the transformed source file
         const transformedSourceFile = result.transformed[0] as ts.SourceFile;

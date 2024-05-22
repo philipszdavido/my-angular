@@ -12,7 +12,10 @@ exports.doubleCount = (0, core_1.computed)(() => (0, exports.count)() * 2);
       <div>Heavy Count: {{ _count() }}</div>
       <div>Double Count: {{ doubleCount() }}</div>
         {{_count}}
-      <button (click)="clickHandler()">Heavy Incr</button>
+      
+      {{a.b.c}}
+      {{clickHandler(_count)}}
+      <button (click)="clickHandler(_count)">Heavy Incr</button>
     </div>
   `,
     changeDetection: core_1.ChangeDetectionStrategy.OnPush,
@@ -20,6 +23,11 @@ exports.doubleCount = (0, core_1.computed)(() => (0, exports.count)() * 2);
 class HeavyComponent {
     _count = exports.count;
     doubleCount = exports.doubleCount;
+    a = {
+        b: {
+            c: 90
+        }
+    };
     clickHandler() {
         this._count.update((value) => value + 100);
     }
@@ -44,7 +52,7 @@ class HeavyComponent {
                     i0.ɵɵelementEnd();
                     i0.ɵɵtext(16);
                     i0.ɵɵelementStart(22, "button", 23);
-                    i0.ɵɵlistener("click", () => ctx.clickHandler()());
+                    i0.ɵɵlistener("click", () => ctx.clickHandler(_count)());
                     i0.ɵɵtext(23, "Heavy Incr");
                     i0.ɵɵelementEnd();
                     i0.ɵɵelementEnd();
@@ -55,7 +63,7 @@ class HeavyComponent {
                     i0.ɵɵadvance(12);
                     i0.ɵɵtextInterpolate("Double Count:", ctx.doubleCount());
                     i0.ɵɵadvance(16);
-                    i0.ɵɵtextInterpolate(ctx._count);
+                    i0.ɵɵtextInterpolate(ctx._count, "", ctx.a.b.c, "", ctx.clickHandler(ctx._count));
                 }
             }
         });

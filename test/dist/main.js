@@ -92,7 +92,7 @@ class AppComponent {
                 }
                 if (rf && 2) {
                     i0.ɵɵadvance(2);
-                    i0.ɵɵtextInterpolate("Signal Count", ctx.count(), "Observable Count:", i0.ɵɵpipeBind());
+                    i0.ɵɵtextInterpolate("Signal Count", ctx.count(), "Observable Count:", ctx.count$ | ctx.async);
                 }
             }
         });

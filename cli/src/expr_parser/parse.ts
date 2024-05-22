@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
 
-function visitCallExpressionArguments(node) {
+function visitCallExpressionArguments(node: ts.CallExpression) {
     return node.arguments.map(arg => {
         if (ts.isIdentifier(arg)) {
             return ts.factory.createPropertyAccessExpression(
@@ -13,9 +13,16 @@ function visitCallExpressionArguments(node) {
 
 }
 
-function createTransformer(ctxVariable: string) {
+export function createTransformer(ctxVariable: string) {
     return (context: ts.TransformationContext) => {
         const visitor: ts.Visitor = (node: ts.Node): ts.Node => {
+
+            if(ts.isIdentifier(node)) {
+                return ts.factory.createPropertyAccessExpression(
+                    ts.factory.createIdentifier(ctxVariable),
+                    node
+                );
+            }
 
             if (ts.isIdentifier(node) && ts.isExpressionStatement(node?.parent) && !isParameter(node)) {
 
@@ -54,9 +61,9 @@ function createTransformer(ctxVariable: string) {
                     // @ts-ignore
                     ts.factory.createPropertyAccessExpression(ts.factory.createIdentifier(ctxVariable), node.expression),
                     node.typeArguments,
-                    visitCallExpressionArguments(node)
+                    //visitCallExpressionArguments(node)
                     // @ts-ignore
-                    //node.arguments.map(arg => ts.visitNode(arg, visitor))
+                    node.arguments.map(arg => ts.visitNode(arg, visitor))
                 );
             }
 
@@ -118,6 +125,7 @@ function transformCode(code: string, ctxVariable: string): string {
 }
 
 // Example usage
-const code = `a.b.c; a; a.b; b?.c; b['ui']; f[9]; console.log(90); call(x, y); /* new Obj(); [1, 2, 3]; { key: value };*/`;
+const code = `a.b.c; a; a.b; b?.c; b['ui']; f[9]; console.log(90); call(x.x, y); /* new Obj(); [1, 2, 3]; { key: value };*/`;
 const transformedCode = transformCode(code, 'ctx');
 console.log(transformedCode);
+
