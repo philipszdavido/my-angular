@@ -11,7 +11,7 @@ exports.doubleCount = (0, core_1.computed)(() => (0, exports.count)() * 2);
     <div style="background-color: orange;padding: 10px;">
       <div>Heavy Count: {{ _count() }}</div>
       <div>Double Count: {{ doubleCount() }}</div>
-
+        {{_count}}
       <button (click)="clickHandler()">Heavy Incr</button>
     </div>
   `,
@@ -42,6 +42,7 @@ class HeavyComponent {
                     i0.ɵɵelementStart(11, "div");
                     i0.ɵɵtext(12);
                     i0.ɵɵelementEnd();
+                    i0.ɵɵtext(16);
                     i0.ɵɵelementStart(22, "button", 23);
                     i0.ɵɵlistener("click", () => ctx.clickHandler()());
                     i0.ɵɵtext(23, "Heavy Incr");
@@ -53,6 +54,8 @@ class HeavyComponent {
                     i0.ɵɵtextInterpolate("Heavy Count:", ctx._count());
                     i0.ɵɵadvance(12);
                     i0.ɵɵtextInterpolate("Double Count:", ctx.doubleCount());
+                    i0.ɵɵadvance(16);
+                    i0.ɵɵtextInterpolate(ctx._count);
                 }
             }
         });

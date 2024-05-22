@@ -19,8 +19,11 @@ export const doubleCount: Signal<number> = computed(() => count() * 2);
     <div style="background-color: orange;padding: 10px;">
       <div>Heavy Count: {{ _count() }}</div>
       <div>Double Count: {{ doubleCount() }}</div>
-
-      <button (click)="clickHandler()">Heavy Incr</button>
+        {{_count}}
+      
+      {{a.b.c}}
+      {{clickHandler(_count)}}
+      <button (click)="clickHandler(_count)">Heavy Incr</button>
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,6 +31,12 @@ export const doubleCount: Signal<number> = computed(() => count() * 2);
 export class HeavyComponent {
   _count = count;
   doubleCount = doubleCount;
+
+  a = {
+    b: {
+      c: 90
+    }
+  }
 
   clickHandler() {
     this._count.update((value) => value + 100);

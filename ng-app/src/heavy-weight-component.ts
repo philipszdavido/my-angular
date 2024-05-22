@@ -10,8 +10,8 @@ export const count = signal(0);
     <div style="background-color: orange;padding: 10px;">
       <div>Heavy Count: {{ _count }}</div>
       <div style="display: block" >Double Count: {{ doubleCount }}</div>
-
-      <button [disabled]="true" (click)="clickHandler()">Heavy Incr</button>
+        {{clickHandler(_count)}}
+      <button [disabled]="true" (click)="clickHandler(_count)">Heavy Incr</button>
     </div>
 
     <ng-component [input1]="_count" (output1)="$event" />
@@ -23,7 +23,7 @@ export class HeavyComponent {
   _count = 0;
   doubleCount = this._count * 2;
 
-  clickHandler() {
+  clickHandler(value: number) {
     this._count++;
     this.doubleCount = this._count * 2;
   }
