@@ -57,7 +57,7 @@ export class CcustomSlider {
 
     Observable Count: {{ count$ | async }} {{test$ | async}}
 
-    <button (click)="handleEvent('click')">Click Me</button>
+    <button (keyup)="handleEvent($event); $event; prim = $event;" (click)="handleEvent('click')">Click Me</button>
   `,
 })
 export class AppComponent {
@@ -65,7 +65,9 @@ export class AppComponent {
   count$ = toObservable(count);
   test$ = toObservable(count)
 
-  handleEvent(event: string) {
+  prim: any;
+
+  handleEvent(event: any) {
     count.set(90000);
   }
 

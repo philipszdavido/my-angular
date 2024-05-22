@@ -7,7 +7,7 @@ function createTransformer(ctxVariable: string) {
         const visitor: ts.Visitor = (node: ts.Node): ts.Node => {
             // If the node is an identifier (and not a property name or parameter declaration), prefix it with ctx.
             if (ts.isIdentifier(node) && !isPropertyName(node) && !isParameter(node)) {
-                return ts.createPropertyAccess(ts.createIdentifier(ctxVariable), node);
+                return factory.createPropertyAccess(factory.createIdentifier(ctxVariable), node);
             }
 
             // Handle property access expressions (e.g., a.b.c)
