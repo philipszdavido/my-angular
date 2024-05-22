@@ -8,8 +8,6 @@ function tokenize(html) {
     const doctypeRegex = /^<!DOCTYPE[\s\S]*?>/i;
     input = input.replace(doctypeRegex, '');
 
-    console.log(input)
-
     while (current < input.length) {
         let char = input[current];
 
