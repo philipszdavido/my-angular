@@ -245,7 +245,6 @@ function generateTextNode(index: number, text?: string) {
   );
 }
 
-
 function generateListenerNode(eventName: string, tag: string, index: number, handler: string) {
   return ts.factory.createExpressionStatement(
     ts.factory.createCallExpression(

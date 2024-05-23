@@ -5,7 +5,6 @@ import {
   extractComponentMetadata,
   getComponentDecorator,
   hasComponentDecorator,
-  transformComponentToIvy,
   updateClassDeclaration,
 } from "./transformer";
 
