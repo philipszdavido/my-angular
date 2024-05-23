@@ -134,7 +134,7 @@ class ViewGenerator {
         this.stmts.push(generateTextNode(index));
 
         this.updateStmts.push(generateAdvanceNode(index.toString()));
-        this.updateStmts.push(generateTextInterpolateNode(this.parseInterpolations(text, index)))
+        this.updateStmts.push(generateTextInterpolateNode(this.parseInterpolations(text)))
 
         return {
           creation: `i0.ɵɵtext(${index});\n`,
