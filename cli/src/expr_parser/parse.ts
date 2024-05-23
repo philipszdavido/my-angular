@@ -125,7 +125,7 @@ function transformCode(code: string, ctxVariable: string): string {
 }
 
 // Example usage
-const code = `a.b.c; a; a.b; b?.c; b['ui']; f[9]; console.log(90); call(x.x, y); /* new Obj(); [1, 2, 3]; { key: value };*/`;
+const code = `a.b.c; a; a.b; b?.c; b['ui']; f[9]; console.log(90); call(x.x, y); 9*8; 9; tt == 5; /* new Obj(); [1, 2, 3]; { key: value };*/`;
 const transformedCode = transformCode(code, 'ctx');
 console.log(transformedCode);
 
