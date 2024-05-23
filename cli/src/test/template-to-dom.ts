@@ -271,3 +271,50 @@ function s() {
     const resultHtml = replaceCustomDirectivesAndPipes(htmlInput);
     console.log(resultHtml);
 }
+
+`
+<!DOCTYPE html>
+<html>
+
+<body>
+<h1 (click)="console.log(34); $event">My First Heading</h1>
+<p [disabled]="true">My first paragraph. {{yu}} <ng-pipe expr="rtr$" pipe="async"></ng-pipe> {{console.log(34)}}{{a.o}}</p>
+<p *ngIf="true">@</p>
+
+</body>
+
+</html>
+
+<p></p>
+errr<ng-if decls="prim == 4"> hjhjh
+<div>Hello if new</div>
+<div>Hello if new <ng-pipe expr="expr" pipe="date"></ng-pipe></div>
+</ng-if> <ng-else-if decls="prim == 5">
+<div>Hello else if new</div>
+<div>Hello else if new</div>
+</ng-else-if> <ng-else>
+<div>Hello else new</div>
+<div>Hello else new</div>
+</ng-else>
+
+<ng-for decls="arr of prim; track $index; let last = $last">
+<div>For {{arr}}</div>
+<div>For {{count()}}</div>
+<ng-if decls="prim == 4">
+<div>Hello if new</div>
+<div>Hello if new</div>
+</ng-if>
+</ng-for> <ng-for-empty>
+<div>Empty</div>
+</ng-for-empty>
+
+<ng-switch decls="prim">
+<ng-case decls="4">
+<div>Case 4</div>
+</ng-case> <ng-case decls="5">
+<div>Case 5</div>
+</ng-case> <ng-default>
+<div>Default</div>
+</ng-default>
+</ng-switch>
+`
