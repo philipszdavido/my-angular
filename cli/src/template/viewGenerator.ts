@@ -17,6 +17,8 @@ type InterpolationType = {
   content: string
 }
 
+const templatesNodeNames = ["ng-if", "ng-for", "ng-else", "ng-else-if", "ng-empty", "ng-case", "ng-switch", "ng-default"]
+
 class ViewGenerator {
   private options: ViewGeneratorOptions;
 
@@ -55,6 +57,12 @@ class ViewGenerator {
     index: number
   ): { creation: string; update: string } {
     if (node instanceof Element) {
+      const tag = node.tagName;
+      
+      if(templatesNodeNames.includes(tag)) {
+        return this.processTemplateElement(node, index)
+      }
+
       return this.processElement(node, index);
     } else if (node instanceof Text) {
       return this.processText(node, index);
@@ -179,6 +187,10 @@ class ViewGenerator {
       ${updateCode}
     }
     `;
+  }
+
+  private processTemplateElement(node: Element, index: number) {
+    return {creation: "", update: ""};
   }
 }
 
