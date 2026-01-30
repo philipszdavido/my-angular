@@ -41,6 +41,7 @@
     "webpack": "^5.89.0"
   },
   "scripts": {
+    "build:types": "tsc -p tsconfig.json",
     "build:core": "rollup -c rollup.config.mjs",
     "build": "npm run build:core",
     "prepublishOnly": "npm run build"
