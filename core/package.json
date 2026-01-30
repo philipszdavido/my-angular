@@ -1,5 +1,5 @@
 {
-  "name": "mini-ng",
+  "name": "@mini-ng/core",
   "version": "0.1.0",
   "main": "./dist/core.cjs.js",
   "module": "./dist/core.mjs",

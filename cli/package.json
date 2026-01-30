@@ -24,6 +24,9 @@
   },
   "homepage": "https://github.com/philipszdavido/mypluralize#readme",
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^29.0.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-terser": "^0.4.4",
     "@types/chai": "^4.0.4",
     "@types/lodash": "^4.17.1",
     "@types/mocha": "^2.2.43",
@@ -46,6 +49,7 @@
     "node-html-parser": "^6.1.13",
     "parse5": "^7.1.2",
     "pluralize": "^7.0.0",
+    "rollup": "^4.57.1",
     "webpack": "^5.89.0",
     "webpack-dev-server": "^4.15.1"
   }
