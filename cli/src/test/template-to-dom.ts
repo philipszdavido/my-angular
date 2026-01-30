@@ -160,7 +160,7 @@ function replaceCustomDirectivesV4(html) {
     return html;
 }
 
-function replaceCustomDirectivesAndPipes(html){
+function replaceCustomDirectivesAndPipes(html) {
     // Function to match balanced curly braces
     const matchBalancedBraces = (str, startIndex) => {
         let stack = 1; // We already found the first '{'

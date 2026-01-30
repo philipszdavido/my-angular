@@ -32,7 +32,8 @@ class ViewGenerator {
   }
 
   generateViewCode(html: string) {
-    const ngHtmlString = replaceCustomDirectivesAndPipes(html)
+    console.log(html);
+    const ngHtmlString = html;//replaceCustomDirectivesAndPipes(html)
     const document = parseDocument(ngHtmlString);
     const nodes = document.childNodes;
 
