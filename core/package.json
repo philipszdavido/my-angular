@@ -1,6 +1,6 @@
 {
   "name": "@mini-ng/core",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "main": "./dist/core.cjs.js",
   "module": "./dist/core.mjs",
   "types": "./dist/index.d.ts",
