@@ -27,7 +27,6 @@
 //   return def;
 // }
 
-
 type LView = any[];
 
 interface RuntimeState {
