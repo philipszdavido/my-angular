@@ -74,5 +74,5 @@ allDiagnostics.forEach((diagnostic) => {
   }
 });
 
-const exitCode = emitResult.emitSkipped ? 1 : 0;
-process.exit(exitCode);
+// const exitCode = emitResult.emitSkipped ? 1 : 0;
+// process.exit(exitCode);

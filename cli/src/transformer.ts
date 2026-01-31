@@ -378,19 +378,40 @@ export function updateClassDeclaration_(
   );
 }
 
+function preserveExport(node: ts.ClassDeclaration): ts.Modifier[] | undefined {
+  if (!node.modifiers) return undefined;
+  const exportModifier = node.modifiers.find(
+    (m) => m.kind === ts.SyntaxKind.ExportKeyword,
+  );
+  if (exportModifier) {
+    return [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)];
+  }
+  return undefined;
+}
+
 export function updateClassDeclaration(
   node: ts.ClassDeclaration,
   newMembers: ts.ClassElement[],
 ) {
+  // return ts.factory.updateClassDeclaration(
+  //   node,
+  //   /* decorators */ undefined,
+  //   //node.modifiers,
+  //   node.name,
+  //   node.typeParameters,
+  //   node.heritageClauses,
+  //   [...node.members, ...newMembers],
+  // );
+
   return ts.factory.updateClassDeclaration(
     node,
-    /* decorators */ undefined,
-    //node.modifiers,
+    preserveExport(node), // ✅ keeps 'export'
     node.name,
     node.typeParameters,
     node.heritageClauses,
-    [...node.members, ...newMembers],
+    [...node.members, ...newMembers], // your static blocks
   );
+
 }
 
 export function createClassStaticBlock(node: ts.Block) {
