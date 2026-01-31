@@ -15,10 +15,9 @@ export function transformPlugin(
     const factory = context.factory;
 
     function visit(node: ts.Node): ts.Node {
-
       // we need to skip comments
 
-      if(ts.isEmptyStatement(node)) {
+      if (ts.isEmptyStatement(node)) {
         return factory.createEmptyStatement();
       }
 
@@ -42,15 +41,14 @@ export function transformPlugin(
     }
 
     return (sourceFile) => {
+      // const newStatements = sourceFile.statements.map((stmt) => {
+      //   // Remove any attached comments manually
+      //   ts.setSyntheticLeadingComments(stmt, []);
+      //   ts.setSyntheticTrailingComments(stmt, []);
+      //   return stmt;
+      // });
 
-      const newStatements = sourceFile.statements.map((stmt) => {
-        // Remove any attached comments manually
-        ts.setSyntheticLeadingComments(stmt, []);
-        ts.setSyntheticTrailingComments(stmt, []);
-        return stmt;
-      });
-      
-      sourceFile = factory.updateSourceFile(sourceFile, newStatements);
+      // sourceFile = factory.updateSourceFile(sourceFile, newStatements);
 
       // check if import from "@mini-ng/core" exists
       let hasMiniNgImport = sourceFile.statements.some(
@@ -72,10 +70,28 @@ export function transformPlugin(
           /* assertClause */ undefined,
         );
 
+        let statements = [];
+        let pushedImport = false;
+
+        sourceFile.statements.forEach((stmt) => {
+          if (ts.isImportDeclaration(stmt)) {
+            statements.push(stmt);
+          } else {
+            if (pushedImport === false) {
+              statements.push(importStatement);
+              statements.push(stmt);
+              pushedImport = true;
+            } else {
+              statements.push(stmt);
+            }
+          }
+        });
+
         // Prepend the import at the top
         sourceFile = factory.updateSourceFile(sourceFile, [
-          importStatement,
-          ...sourceFile.statements,
+          /*importStatement,
+          ...sourceFile.statements,*/
+          ...statements,
         ]);
       }
 

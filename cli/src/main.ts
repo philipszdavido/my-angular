@@ -2,6 +2,7 @@ import * as glob from "glob";
 import * as ts from "typescript";
 import { transformPlugin } from "./visitor";
 import { build } from "./bundle";
+import { bundleProject } from "./bundle-vite"
 
 // /Users/chidumennamdi/Documents/MacBookPro2020/developerse/my-angular/test
 // "/Users/chidumennamdi/Downloads/MacBookPro2020/developerse/my-angular/test"
@@ -48,7 +49,7 @@ const emitResult = program.emit(undefined, undefined, undefined, undefined, {
   before: [transformPlugin(program)],
 });
 
-build(currentDirectory).then(() => {
+bundleProject(currentDirectory).then(() => {
   console.log("Build and bundling completed.");
 });
 
