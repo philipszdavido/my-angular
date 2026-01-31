@@ -100,80 +100,159 @@ function getMetadataProperty(
   );
 }
 
+// export function createFactoryStatic(componentName: string) {
+//   const factory = ts.factory;
+
+//   const parameterName = "t";
+//   const functionName = componentName + "_Factory";
+
+//   const node = factory.createExpressionStatement(
+//     factory.createAssignment(
+//       factory.createPropertyAccessExpression(factory.createThis(), "ɵfac"),
+//       factory.createFunctionExpression(
+//         undefined,
+//         undefined,
+//         functionName,
+//         undefined,
+//         [
+//           factory.createParameterDeclaration(
+//             undefined,
+//             undefined,
+//             parameterName,
+//             undefined,
+//             undefined,
+//             undefined
+//           ),
+//         ],
+//         undefined,
+//         factory.createBlock(
+//           [
+//             factory.createReturnStatement(
+//               factory.createNewExpression(
+//                 factory.createParenthesizedExpression(
+//                   factory.createLogicalOr(
+//                     factory.createIdentifier(parameterName),
+//                     factory.createIdentifier(componentName)
+//                   )
+//                 ),
+//                 [],
+//                 []
+//               )
+//             ),
+//           ],
+//           true
+//         )
+//       )
+//     )
+//   );
+
+//   return /*createClassStaticBlock(*/ factory.createBlock([node], true); //);
+// }
 export function createFactoryStatic(componentName: string) {
-  const factory = ts.factory;
+  const f = ts.factory;
 
-  const parameterName = "t";
-  const functionName = componentName + "_Factory";
-
-  const node = factory.createExpressionStatement(
-    factory.createAssignment(
-      factory.createPropertyAccessExpression(factory.createThis(), "ɵfac"),
-      factory.createFunctionExpression(
-        undefined,
-        undefined,
-        functionName,
-        undefined,
+  return f.createPropertyDeclaration(
+    [f.createModifier(ts.SyntaxKind.StaticKeyword)],
+    "ɵfac",
+    undefined,
+    undefined,
+    f.createFunctionExpression(
+      undefined,
+      undefined,
+      `${componentName}_Factory`,
+      undefined,
+      [
+        f.createParameterDeclaration(
+          undefined,
+          undefined,
+          "t",
+          undefined,
+          undefined,
+          undefined,
+        ),
+      ],
+      undefined,
+      f.createBlock(
         [
-          factory.createParameterDeclaration(
-            undefined,
-            undefined,
-            parameterName,
-            undefined,
-            undefined,
-            undefined
-          ),
-        ],
-        undefined,
-        factory.createBlock(
-          [
-            factory.createReturnStatement(
-              factory.createNewExpression(
-                factory.createParenthesizedExpression(
-                  factory.createLogicalOr(
-                    factory.createIdentifier(parameterName),
-                    factory.createIdentifier(componentName)
+          f.createReturnStatement(
+            f.createNewExpression(
+              // f.createParen(
+              //   f.createBinary(
+              //     f.createIdentifier("t"),
+              //     ts.SyntaxKind.BarBarToken,
+              //     f.createIdentifier(componentName),
+              //   ),
+              // ),
+              f.createParenthesizedExpression(
+                  f.createLogicalOr(
+                    f.createIdentifier("t"),
+                    f.createIdentifier(componentName)
                   )
                 ),
-                [],
-                []
-              )
+              undefined,
+              [],
             ),
-          ],
-          true
-        )
-      )
-    )
+          ),
+        ],
+        true,
+      ),
+    ),
   );
-
-  return /*createClassStaticBlock(*/ factory.createBlock([node], true); //);
 }
+
+
+// export function createDefineComponentStatic(
+//   componentName: string,
+//   metadata: ComponentMetadata
+// ) {
+//   const factory = ts.factory;
+
+//   const node = factory.createExpressionStatement(
+//     factory.createAssignment(
+//       factory.createPropertyAccessExpression(factory.createThis(), "ɵcmp"),
+//       factory.createCallExpression(
+//         factory.createPropertyAccessExpression(
+//           factory.createIdentifier("i0"),
+//           "ɵɵdefineComponent"
+//         ),
+//         undefined,
+//         [
+//           factory.createObjectLiteralExpression(
+//             [...createCmpDefinitionPropertiesNode(componentName, metadata)],
+//             true
+//           ),
+//         ]
+//       )
+//     )
+//   );
+
+//   return factory.createBlock([node], true);
+// }
 export function createDefineComponentStatic(
   componentName: string,
-  metadata: ComponentMetadata
+  metadata: ComponentMetadata,
 ) {
-  const factory = ts.factory;
+  const f = ts.factory;
 
-  const node = factory.createExpressionStatement(
-    factory.createAssignment(
-      factory.createPropertyAccessExpression(factory.createThis(), "ɵcmp"),
-      factory.createCallExpression(
-        factory.createPropertyAccessExpression(
-          factory.createIdentifier("i0"),
-          "ɵɵdefineComponent"
+  return f.createPropertyDeclaration(
+    [f.createModifier(ts.SyntaxKind.StaticKeyword)],
+    "ɵcmp",
+    undefined,
+    undefined,
+    f.createCallExpression(
+      f.createPropertyAccessExpression(
+        f.createIdentifier("i0"),
+        "ɵɵdefineComponent",
+      ),
+      undefined,
+      [
+        f.createObjectLiteralExpression(
+          createCmpDefinitionPropertiesNode(componentName, metadata),
+          true,
         ),
-        undefined,
-        [
-          factory.createObjectLiteralExpression(
-            [...createCmpDefinitionPropertiesNode(componentName, metadata)],
-            true
-          ),
-        ]
-      )
-    )
+      ],
+    ),
   );
-
-  return factory.createBlock([node], true);
 }
 
 function createCmpDefinitionPropertiesNode(
@@ -271,7 +350,7 @@ function createCmpDefinitionPropertiesNode(
   return properties;
 }
 
-export function updateClassDeclaration(
+export function updateClassDeclaration_(
   node: ts.ClassDeclaration,
   staticBlocks: ts.Block[]
 ) {
@@ -279,13 +358,38 @@ export function updateClassDeclaration(
     ts.factory.createClassStaticBlockDeclaration(staticBlock)
   );
 
+  // factory.updateClassDeclaration(
+  //   node,
+  //   undefined, // decorators removed
+  //   node.modifiers,
+  //   node.name,
+  //   node.typeParameters,
+  //   node.heritageClauses,
+  //   [...node.members, facStatic, cmpStatic],
+  // );
+
   return ts.factory.updateClassDeclaration(
     node,
-    node.modifiers,
+    undefined,//node.modifiers,
     node.name,
     node.typeParameters,
     node.heritageClauses,
     [...node.members, ...blocks]
+  );
+}
+
+export function updateClassDeclaration(
+  node: ts.ClassDeclaration,
+  newMembers: ts.ClassElement[],
+) {
+  return ts.factory.updateClassDeclaration(
+    node,
+    /* decorators */ undefined,
+    //node.modifiers,
+    node.name,
+    node.typeParameters,
+    node.heritageClauses,
+    [...node.members, ...newMembers],
   );
 }
 

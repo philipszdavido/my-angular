@@ -17,10 +17,29 @@ const tsFiles = glob.sync("src/**/*.ts");
 // Usage
 const program = ts.createProgram({
   rootNames: tsFiles,
+  // options: {
+  //   module: ts.ModuleKind.ESNext,
+  //   target: ts.ScriptTarget.ES2020,
+  //   // target: ts.ScriptTarget.Latest,
+  //   // module: ts.ModuleKind.CommonJS,
+  //   // experimentalDecorators: true,
+  //   outDir: "./dist",
+  // },
+  // options: {
+  //   module: ts.ModuleKind.ESNext,
+  //   target: ts.ScriptTarget.ES2020,
+  //   experimentalDecorators: false,
+  //   emitDecoratorMetadata: false,
+  //   useDefineForClassFields: true,
+  //   outDir: "./dist",
+  // },
+
   options: {
-    target: ts.ScriptTarget.Latest,
-    module: ts.ModuleKind.CommonJS,
-    //experimentalDecorators: true,
+    module: ts.ModuleKind.ESNext,
+    target: ts.ScriptTarget.ES2022,
+    useDefineForClassFields: true,
+    experimentalDecorators: false,
+    emitDecoratorMetadata: false,
     outDir: "./dist",
   },
 });
