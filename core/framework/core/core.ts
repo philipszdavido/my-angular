@@ -1,78 +1,67 @@
-// export function ɵɵelementStart(index: number, tag: string) {
-//   const el = document.createElement(tag);
-//   (window as any).__view[index] = el;
-//   document.body.appendChild(el);
-// }
-
-// export function ɵɵtext(index: number) {
-//   const text = document.createTextNode("");
-//   (window as any).__view[index] = text;
-//   document.body.appendChild(text);
-// }
-
-// export function ɵɵelementEnd() {
-//   // no-op for now
-// }
-
-// export function ɵɵadvance(index: number) {
-//   (window as any).__cursor = (window as any).__view[index];
-// }
-
-// export function ɵɵtextInterpolate1(prefix: string, value: any, suffix: string) {
-//   const node = (window as any).__cursor;
-//   node.textContent = prefix + value + suffix;
-// }
-
-// export function ɵɵdefineComponent(def: any) {
-//   return def;
-// }
-
-type LView = any[];
-
-interface RuntimeState {
-  view: LView;
-  parentStack: Node[];
-  cursor: Node | null;
-}
-
-const runtime: RuntimeState = {
-  view: [],
-  parentStack: [],
-  cursor: null,
+export type TView = {
+  blueprint: any[];
+  firstCreatePass: boolean;
 };
 
-// expose for debugging
-(window as any).__view = runtime.view;
+export type LView = {
+  tView: TView;
+  data: any[];
+  parent: LView | null;
+  host: any;
+};
+
+const runtime = {
+  currentLView: null as LView | null,
+  lViewStack: [] as LView[],
+  parentStack: [] as Node[],
+  cursor: null as Node | null,
+};
+
+export function ɵɵenterView(lView: LView) {
+  runtime.lViewStack.push(lView);
+  runtime.currentLView = lView;
+  runtime.parentStack.push(lView.host);
+}
+
+export function ɵɵleaveView() {
+  runtime.lViewStack.pop();
+  runtime.currentLView =
+    runtime.lViewStack[runtime.lViewStack.length - 1] ?? null;
+    runtime.parentStack.pop();
+}
 
 export function ɵɵelementStart(index: number, tag: string) {
-  let el = runtime.view[index];
+  const lView = runtime.currentLView!;
+  const tView = lView.tView;
 
-  // first render → create
-  if (!el) {
+  let el = lView.data[index];
+
+  if (tView.firstCreatePass) {
     el = document.createElement(tag);
-    runtime.view[index] = el;
+    lView.data[index] = el;
   }
 
   const parent =
     runtime.parentStack[runtime.parentStack.length - 1] ?? document.body;
 
   parent.appendChild(el);
-
   runtime.parentStack.push(el);
   runtime.cursor = el;
 }
 
 export function ɵɵelementEnd() {
-  runtime.parentStack.pop();
-  runtime.cursor = runtime.parentStack[runtime.parentStack.length - 1] ?? null;
+    runtime.parentStack.pop();
 }
 
 export function ɵɵtext(index: number) {
-  let text = runtime.view[index];
+  const lView = runtime.currentLView!;
+  const tView = lView.tView;
 
-  if (!text) {
+  let text = lView.data[index];
+
+  if (tView.firstCreatePass) {
     text = document.createTextNode("");
-    runtime.view[index] = text;
+    lView.data[index] = text;
   }
 
   const parent =
@@ -82,13 +71,8 @@ export function ɵɵtext(index: number) {
   runtime.cursor = text;
 }
 
-export function ɵɵadvance(index: number) {
-  runtime.cursor = runtime.view[index];
-}
-
 export function ɵɵtextInterpolate1(prefix: string, value: any, suffix: string) {
   const node = runtime.cursor as Text;
-
   const newValue = prefix + value + suffix;
 
   if (node.textContent !== newValue) {
@@ -96,11 +80,12 @@ export function ɵɵtextInterpolate1(prefix: string, value: any, suffix: string)
   }
 }
 
-export function ɵɵdefineComponent(def: {
-  type: any;
-  selectors: string[][];
-  template: (ctx: any) => void;
-}) {
+export function ɵɵdefineComponent(def: any) {
+  const tView: TView = {
+    blueprint: new Array(def.decls).fill(null),
+    firstCreatePass: true,
+  };
+
+  def.tView = tView;
   return def;
 }
-
