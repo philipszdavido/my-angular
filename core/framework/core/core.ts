@@ -67,9 +67,9 @@ export function ɵɵelementStart(index: number, tag: string) {
 }
 
 export function ɵɵelementEnd() {
-  runtime.lViewStack.pop();
-  runtime.currentLView =
-      runtime.lViewStack[runtime.lViewStack.length - 1] ?? null;
+  // runtime.lViewStack.pop();
+  // runtime.currentLView =
+  //     runtime.lViewStack[runtime.lViewStack.length - 1] ?? null;
   runtime.parentStack.pop();
 }
 

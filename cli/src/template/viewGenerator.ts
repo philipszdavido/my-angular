@@ -184,6 +184,7 @@ class ViewGenerator {
     if (rf & 1) {
       ${creationCode}
     }
+    
     if (rf & 2) {
       ${updateCode}
     }
@@ -274,13 +275,15 @@ function generateListenerNode(eventName: string, tag: string, index: number, han
           [],
           undefined,
           ts.factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
-          ts.factory.createCallExpression(
-            ts.factory.createPropertyAccessExpression(
-              ts.factory.createIdentifier("ctx"),
-              ts.factory.createIdentifier(handler)
-            ),
-            undefined,
-            []
+          ts.factory.createBlock(
+              [
+                ts.factory.createReturnStatement(
+                        ts.factory.createPropertyAccessExpression(
+                            ts.factory.createIdentifier("ctx"),
+                            ts.factory.createIdentifier(handler)
+                        )
+                )
+              ]
           )
         )
       ]
