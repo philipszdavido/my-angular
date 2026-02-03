@@ -42,6 +42,7 @@ export function createElementNode(
 
 export function bootstrapApplication(component: any) {
   const componentDef = component.ɵcmp;
+  const componentInstance = component.ɵfac();
 
   const elementName = componentDef.selectors[0][0] || "div";
 
@@ -63,16 +64,17 @@ export function bootstrapApplication(component: any) {
     data: [...componentDef.tView.blueprint],
     parent: null,
     host: hostElement,
+    context: componentInstance
   };
 
   console.log(componentDef, lView);
 
   ɵɵenterView(lView);
-  componentDef.template(1, component.ɵfac());
+  componentDef.template(1, componentInstance);
   componentDef.tView.firstCreatePass = false;
 
   // First update pass
-  componentDef.template(2, component.ɵfac());
+  componentDef.template(2, componentInstance);
 
   ɵɵleaveView();
 }

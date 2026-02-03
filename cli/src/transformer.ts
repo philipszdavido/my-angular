@@ -13,6 +13,7 @@ type ComponentMetadata = {
   changeDetection: ts.ObjectLiteralElementLike;
   interpolation: ts.ObjectLiteralElementLike;
   preserveWhitespaces: ts.ObjectLiteralElementLike;
+  dependencies: ts.ObjectLiteralElementLike;
 };
 
 export function hasComponentDecorator(node: ts.ClassDeclaration) {
@@ -76,6 +77,8 @@ export function extractComponentMetadata(
     "preserveWhitespaces"
   );
 
+  const dependencies = getMetadataProperty(metadata.properties, "imports");
+
   return {
     selector,
     standalone,
@@ -88,6 +91,7 @@ export function extractComponentMetadata(
     changeDetection,
     interpolation,
     preserveWhitespaces,
+    dependencies,
   };
 }
 
@@ -299,6 +303,20 @@ function createCmpDefinitionPropertiesNode(
         ts.factory.createFalse()
       )
     );
+  }
+
+  if (metadata.dependencies) {
+    
+    const deps = ((metadata.dependencies as ts.PropertyAssignment).initializer as ts.ArrayLiteralExpression).elements.map(el => {
+      return el;
+    });
+
+    properties.push(ts.factory.createPropertyAssignment(
+      ts.factory.createIdentifier("dependencies"),
+      ts.factory.createArrayLiteralExpression(
+        deps
+      )
+    ));
   }
 
   // template
