@@ -1,4 +1,4 @@
-import { LView, ɵɵenterView, ɵɵleaveView } from "./core";
+import { LView, enterView, leaveView } from "./core";
 import { DefaultDomRenderer2 } from "./browser";
 
 /**
@@ -69,12 +69,12 @@ export function bootstrapApplication(component: any) {
 
   console.log(componentDef, lView);
 
-  ɵɵenterView(lView);
+  enterView(lView);
   componentDef.template(1, componentInstance);
   componentDef.tView.firstCreatePass = false;
 
   // First update pass
   componentDef.template(2, componentInstance);
 
-  ɵɵleaveView();
+  leaveView();
 }

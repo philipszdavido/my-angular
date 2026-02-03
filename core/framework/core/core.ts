@@ -20,13 +20,13 @@ const runtime = {
   cursor: null as Node | null,
 };
 
-export function ɵɵenterView(lView: LView) {
+export function enterView(lView: LView) {
   runtime.lViewStack.push(lView);
   runtime.currentLView = lView;
   runtime.parentStack.push(lView.host);
 }
 
-export function ɵɵleaveView() {
+export function leaveView() {
   runtime.lViewStack.pop();
   runtime.currentLView =
     runtime.lViewStack[runtime.lViewStack.length - 1] ?? null;
@@ -67,9 +67,6 @@ export function ɵɵelementStart(index: number, tag: string) {
 }
 
 export function ɵɵelementEnd() {
-  // runtime.lViewStack.pop();
-  // runtime.currentLView =
-  //     runtime.lViewStack[runtime.lViewStack.length - 1] ?? null;
   runtime.parentStack.pop();
 }
 
@@ -91,7 +88,12 @@ export function ɵɵtext(index: number, value = '') {
   runtime.cursor = text;
 }
 
-export function ɵɵtextInterpolate1(prefix: string, value: any, suffix: string) {
+export function ɵɵadvance(delta: number = 1) {
+  const lView = runtime.currentLView!;
+  runtime.cursor = lView.data[delta];
+}
+
+export function ɵɵtextInterpolate(prefix: string, value: any, suffix: string) {
   const node = runtime.cursor as Text;
   const newValue = prefix + value + suffix;
 
@@ -140,14 +142,14 @@ function renderComponent(component: any, tView: TView, el: any, parent: LView) {
 
       console.log(componentDef, lView);
 
-      ɵɵenterView(lView);
+      enterView(lView);
       componentDef.template(1, componentInstance);
       componentDef.tView.firstCreatePass = false;
 
       // First update pass
       componentDef.template(2, componentInstance);
 
-      ɵɵleaveView();
+      leaveView();
 
     // templateFn();
   //}
