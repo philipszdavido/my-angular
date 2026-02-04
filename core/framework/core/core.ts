@@ -9,6 +9,8 @@ export type TView = {
   template: any;
   directiveRegistry: any[];
   consts: any[];
+  styles: string[];
+  id: string;
 };
 
 export type LView = {
@@ -16,7 +18,7 @@ export type LView = {
   data: any[];
   parent: LView | null;
   host: any;
-  context: unknown;
+  context: any;
 };
 
 export const runtime = {
@@ -51,8 +53,32 @@ export function ɵɵdefineComponent(def: any) {
     template: def.template,
     directiveRegistry: def.dependencies,
     consts: def.consts,
+    styles: def.styles,
+    id: getComponentId(def),
   };
 
   def.tView = tView;
+  def.id = getComponentId(def);
+
   return def;
+}
+
+export function getComponentId<T>(componentDef: any): string {
+
+  let hash = 0;
+
+  const hashSelectors = [
+    componentDef.selectors,
+  ];
+
+  for (const char of hashSelectors.join('|')) {
+    hash = (Math.imul(31, hash) + char.charCodeAt(0)) << 0;
+  }
+
+  hash += 2147483647 + 1;
+
+  const compId = 'c' + hash;
+
+  return compId;
+
 }

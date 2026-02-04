@@ -1,6 +1,10 @@
 import {AttributeMarker} from "./attribute_marker";
 import {CREATE, enterView, leaveView, LView, runtime, TView, UPDATE} from "./core";
 
+const COMPONENT_VARIABLE = '%COMP%';
+const HOST_ATTR = `_nghost-${COMPONENT_VARIABLE}`;
+const CONTENT_ATTR = `_ngcontent-${COMPONENT_VARIABLE}`;
+
 export function ɵɵelementStart(index: number, tag: string, attrsIndex?: number | null,) {
     const lView = runtime.currentLView!;
     const tView = lView.tView;
@@ -20,6 +24,9 @@ export function ɵɵelementStart(index: number, tag: string, attrsIndex?: number
             }
         }
 
+        const id = lView.tView?.id;
+        const id_value = "_ngcontent-" + id;
+        (el as HTMLElement).setAttribute(id_value, id_value);
 
         // check the tag is a component
         // search in tview directive registry
@@ -56,32 +63,43 @@ export function ɵɵelementEnd() {
 
 function renderComponent(component: any, tView: TView, el: any, parent: LView) {
 
-    const templateFn = tView.template;
-
-    //if (templateFn !== null) {
-
     const componentDef = component.ɵcmp;
     const componentInstance = component.ɵfac();
 
-    const lView: LView = {
-        tView: componentDef.tView,
-        data: [...componentDef.tView.blueprint],
-        parent: parent,
-        host: el,
-        context: componentInstance,
-    };
+    const templateFn = componentDef.template;
 
-    console.log(componentDef, lView);
+    if (templateFn !== null) {
 
-    enterView(lView);
-    componentDef.template(CREATE, componentInstance);
-    componentDef.tView.firstCreatePass = false;
+        const lView: LView = {
+            tView: componentDef.tView,
+            data: [...componentDef.tView.blueprint],
+            parent: parent,
+            host: el,
+            context: componentInstance,
+        };
 
-    // First update pass
-    componentDef.template(UPDATE, componentInstance);
+        enterView(lView);
+        templateFn(CREATE, componentInstance);
+        componentDef.tView.firstCreatePass = false;
 
-    leaveView();
+        if (componentDef.tView.styles) {
+            shimCss(componentDef.id, componentDef.tView.styles.join("\n"));
+        }
 
-    // templateFn();
-    //}
+        // First update pass
+        templateFn(UPDATE, componentInstance);
+
+        leaveView();
+
+    }
+
+}
+
+function shimCss(componentIdentifier: string, styleText: string) {
+
+    styleText = styleText.replaceAll(COMPONENT_VARIABLE, componentIdentifier)
+
+    const style = document.createElement("style");
+    style.textContent = styleText;
+    document.head.appendChild(style);
 }

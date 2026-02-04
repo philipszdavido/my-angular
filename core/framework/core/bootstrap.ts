@@ -68,8 +68,6 @@ export function bootstrapApplication(component: any) {
     context: componentInstance
   };
 
-  console.log(componentDef, lView);
-
   enterView(lView);
 
   componentDef.template(1, componentInstance);

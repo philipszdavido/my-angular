@@ -1,5 +1,6 @@
 import * as ts from "typescript";
 import { Parser } from "./template/parser";
+import {CSSParser} from "./css_parser/css_parser";
 
 type ComponentMetadata = {
   selector: ts.PropertyAssignment;
@@ -7,6 +8,7 @@ type ComponentMetadata = {
   template: ts.PropertyAssignment;
   templateUrl: ts.ObjectLiteralElementLike;
   styleUrls: ts.ObjectLiteralElementLike;
+  styles: ts.PropertyAssignment;
   providers: ts.ObjectLiteralElementLike;
   animations: ts.ObjectLiteralElementLike;
   encapsulation: ts.ObjectLiteralElementLike;
@@ -79,12 +81,15 @@ export function extractComponentMetadata(
 
   const dependencies = getMetadataProperty(metadata.properties, "imports");
 
+  const styles = getMetadataProperty(metadata.properties, "styles") as ts.PropertyAssignment;
+
   return {
     selector,
     standalone,
     template,
     templateUrl,
     styleUrls,
+    styles,
     providers,
     animations,
     encapsulation,
@@ -372,6 +377,24 @@ function createCmpDefinitionPropertiesNode(
         )
     ));
 
+  }
+
+  // styles
+  const styles = metadata.styles;
+
+  if (styles) {
+
+    const cssText = (styles.initializer as ts.StringLiteral).text;
+
+    const cssParser = new CSSParser();
+    const result = cssParser.parsePostCSS(cssText);
+
+    properties.push(ts.factory.createPropertyAssignment(
+        ts.factory.createIdentifier("styles"),
+        ts.factory.createArrayLiteralExpression(
+            [ts.factory.createStringLiteral(result)]
+        )
+    ))
   }
 
   return properties;

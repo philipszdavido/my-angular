@@ -6,6 +6,16 @@ import {factory} from "typescript";
 import {ExpressionParser} from "../expr_parser/expr_parser";
 import {RenderFlags} from "../render/flags";
 import {AttributeMarker} from "./attribute_marker";
+import {
+  ctx,
+  i0,
+  ɵɵadvance,
+  ɵɵelementEnd, ɵɵelementStart,
+  ɵɵlistener,
+  ɵɵproperty,
+  ɵɵtext,
+  ɵɵtextInterpolate
+} from "../constants/constants";
 
 export interface ViewGeneratorOptions {
   // Add any configuration options here
@@ -233,8 +243,8 @@ function generateElementStartNode(
   return ts.factory.createExpressionStatement(
     ts.factory.createCallExpression(
       ts.factory.createPropertyAccessExpression(
-        ts.factory.createIdentifier("i0"),
-        ts.factory.createIdentifier("ɵɵelementStart")
+        ts.factory.createIdentifier(i0),
+        ts.factory.createIdentifier(ɵɵelementStart)
       ),
       undefined,
       params
@@ -246,8 +256,8 @@ function generateElementEndNode() {
   return ts.factory.createExpressionStatement(
     ts.factory.createCallExpression(
       ts.factory.createPropertyAccessExpression(
-        ts.factory.createIdentifier("i0"),
-        ts.factory.createIdentifier("ɵɵelementEnd")
+        ts.factory.createIdentifier(i0),
+        ts.factory.createIdentifier(ɵɵelementEnd)
       ),
       undefined,
       []
@@ -268,8 +278,8 @@ function generateTextNode(index: number, text?: string) {
   return ts.factory.createExpressionStatement(
     ts.factory.createCallExpression(
       ts.factory.createPropertyAccessExpression(
-        ts.factory.createIdentifier("i0"),
-        ts.factory.createIdentifier("ɵɵtext")
+        ts.factory.createIdentifier(i0),
+        ts.factory.createIdentifier(ɵɵtext)
       ),
       undefined,
       params
@@ -281,8 +291,8 @@ function generateListenerNode(eventName: string, tag: string, index: number, han
   return ts.factory.createExpressionStatement(
     ts.factory.createCallExpression(
       ts.factory.createPropertyAccessExpression(
-        ts.factory.createIdentifier("i0"),
-        ts.factory.createIdentifier("ɵɵlistener")
+        ts.factory.createIdentifier(i0),
+        ts.factory.createIdentifier(ɵɵlistener)
       ),
       undefined,
       [
@@ -297,7 +307,7 @@ function generateListenerNode(eventName: string, tag: string, index: number, han
               [
                 ts.factory.createReturnStatement(
                         ts.factory.createPropertyAccessExpression(
-                            ts.factory.createIdentifier("ctx"),
+                            ts.factory.createIdentifier(ctx),
                             ts.factory.createIdentifier(handler)
                         )
                 )
@@ -317,8 +327,8 @@ function generatePropertyNode(propertyName: string, value: string) {
   return ts.factory.createExpressionStatement(
         ts.factory.createCallExpression(
         ts.factory.createPropertyAccessExpression(
-            ts.factory.createIdentifier("i0"),
-            ts.factory.createIdentifier("ɵɵproperty")
+            ts.factory.createIdentifier(i0),
+            ts.factory.createIdentifier(ɵɵproperty)
         ),
         undefined,
         [
@@ -334,8 +344,8 @@ function generatePropertyNode(propertyName: string, value: string) {
 function generateAdvanceNode(index: string) {
   return factory.createExpressionStatement(factory.createCallExpression(
       factory.createPropertyAccessExpression(
-          factory.createIdentifier("i0"),
-          "ɵɵadvance"
+          factory.createIdentifier(i0),
+          ɵɵadvance
       ), undefined,
       [
           factory.createIdentifier(index)
@@ -360,8 +370,8 @@ function generateTextInterpolateNode(bindingExpressions: InterpolationType[]) {
     // @ts-ignore
   const expressionStatement = factory.createExpressionStatement(factory.createCallExpression(
         factory.createPropertyAccessExpression(
-            factory.createIdentifier("i0"),
-            "ɵɵtextInterpolate"
+            factory.createIdentifier(i0),
+            ɵɵtextInterpolate
         ), undefined,
         // @ts-ignore
         [
