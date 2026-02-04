@@ -1,14 +1,13 @@
-// import { parseDocument } from "htmlparser2";
-// import { Element, Node, Text } from "domhandler";
-
 import { parseDocument } from "htmlparser2";
 import { Element, Node, Text } from "domhandler";
 import { camelCase } from "lodash";
 import ts = require("typescript");
 import {factory} from "typescript";
 import {ExpressionParser} from "../expr_parser/expr_parser";
+import {RenderFlags} from "../render/flags";
+import {AttributeMarker} from "./attribute_marker";
 
-interface ViewGeneratorOptions {
+export interface ViewGeneratorOptions {
   // Add any configuration options here
 }
 
@@ -19,20 +18,21 @@ type InterpolationType = {
 
 const templatesNodeNames = ["ng-if", "ng-for", "ng-else", "ng-else-if", "ng-empty", "ng-case", "ng-switch", "ng-default"]
 
-class ViewGenerator {
+export class ViewGenerator {
   private options: ViewGeneratorOptions;
 
-  private stmts: ts.ExpressionStatement[] = [];
-  private updateStmts: ts.ExpressionStatement[] = [];
+  private readonly stmts: ts.ExpressionStatement[] = [];
+  private readonly updateStmts: ts.ExpressionStatement[] = [];
+  private readonly consts: ts.Expression[] = [];
 
   constructor(options: ViewGeneratorOptions = {}) {
     this.options = options;
     this.stmts = [];
-    this.updateStmts = []
+    this.updateStmts = [];
+    this.consts = [];
   }
 
   generateViewCode(html: string) {
-    console.log(html);
     const ngHtmlString = html;//replaceCustomDirectivesAndPipes(html)
     const document = parseDocument(ngHtmlString);
     const nodes = document.childNodes;
@@ -49,6 +49,7 @@ class ViewGenerator {
     return {
       stmts: this.stmts,
       updateStmts: this.updateStmts,
+      consts: this.consts,
       codeString: this.wrapCode(creationCode, updateCode),
     };
   }
@@ -75,14 +76,13 @@ class ViewGenerator {
   private processElement(
     element: Element,
     index: number
-  ): { creation: string; update: string } {
+  ): { creation: string; update: string, attrArray: string[] } {
     const tag = element.tagName;
     const attributes = element.attribs;
     let creation = `i0.ɵɵelementStart(${index}, "${tag}"`;
     let update = "";
     const attrArray = [];
-
-    this.stmts.push(generateElementStartNode(index, tag, Object.keys(attributes).length == 0 ? null : index + 1));
+    let attrIndex;
 
     // Process attributes
     for (const attr in attributes) {
@@ -100,11 +100,27 @@ class ViewGenerator {
         const propertyName = attr.slice(1, -1);
         creation += `, ${index + 1}`;
 
+        this.updateStmts.push(generateAdvanceNode(index.toString()));
         this.updateStmts.push(generatePropertyNode(propertyName, attributes[attr]));
 
         update += `i0.ɵɵproperty("${propertyName}", ctx.${attributes[attr]});\n`;
       } else {
         attrArray.push(`"${attr}", "${attributes[attr]}"`);
+
+        let attr_marker : AttributeMarker;
+        if (attr == "style") {
+          attr_marker = AttributeMarker.Styles;
+        }
+
+        this.consts.push(
+            ts.factory.createArrayLiteralExpression(
+            [
+                ts.factory.createNumericLiteral(attr_marker),
+              ts.factory.createStringLiteral(attributes[attr])
+            ]
+            )
+        )
+        attrIndex = this.consts.length - 1;
       }
     }
 
@@ -112,6 +128,8 @@ class ViewGenerator {
       creation += `, ${attrArray.join(", ")}`;
     }
     creation += `);\n`;
+
+    this.stmts.push(generateElementStartNode(index, tag, /* Object.keys(attributes).length == 0 ? null : index + 1,*/ attrIndex));
 
     // Process children
     let childIndex = index + 1;
@@ -128,7 +146,7 @@ class ViewGenerator {
     creation += `i0.ɵɵelementEnd();\n`;
     this.stmts.push(generateElementEndNode());
 
-    return { creation, update };
+    return { creation, update, attrArray };
   }
 
   private processText(
@@ -181,11 +199,11 @@ class ViewGenerator {
 
   private wrapCode(creationCode: string, updateCode: string): string {
     return `
-    if (rf & 1) {
+    if (rf & ${RenderFlags.CREATE}) {
       ${creationCode}
     }
     
-    if (rf & 2) {
+    if (rf & ${RenderFlags.UPDATE}) {
       ${updateCode}
     }
     `;
@@ -195,8 +213,6 @@ class ViewGenerator {
     return {creation: "", update: ""};
   }
 }
-
-export { ViewGenerator, ViewGeneratorOptions };
 
 function generateElementStartNode(
   index: number,
@@ -208,7 +224,9 @@ function generateElementStartNode(
     ts.factory.createStringLiteral(element),
   ];
 
-  if (attrsIndex) {
+  console.log(index, element, attrsIndex)
+
+  if (attrsIndex !== undefined && attrsIndex >= 0) {
     params.push(ts.factory.createNumericLiteral(attrsIndex));
   }
 
@@ -292,14 +310,23 @@ function generateListenerNode(eventName: string, tag: string, index: number, han
 }
 
 function generatePropertyNode(propertyName: string, value: string) {
-    return ts.factory.createExpressionStatement(
+
+  const exprParser = new ExpressionParser();
+  const transformedNode = exprParser.parse(value);
+
+  return ts.factory.createExpressionStatement(
         ts.factory.createCallExpression(
         ts.factory.createPropertyAccessExpression(
             ts.factory.createIdentifier("i0"),
             ts.factory.createIdentifier("ɵɵproperty")
         ),
         undefined,
-        []
+        [
+            ts.factory.createStringLiteral(propertyName),
+            // @ts-ignore
+            transformedNode.statements[0].expression
+            // ts.factory.createStringLiteral(value)
+        ]
         )
     )
 }

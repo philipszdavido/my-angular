@@ -330,7 +330,7 @@ function createCmpDefinitionPropertiesNode(
     const templateString = (template.initializer as ts.StringLiteral).text;
 
     const parser = new Parser(templateString);
-    const templateNode = parser.parse();
+    const {block, consts} = parser.parse();
 
     properties.push(
       ts.factory.createPropertyAssignment(
@@ -359,10 +359,19 @@ function createCmpDefinitionPropertiesNode(
             ),
           ],
           undefined,
-          templateNode
+          block
         )
       )
     );
+
+    // consts
+    properties.push(ts.factory.createPropertyAssignment(
+        ts.factory.createIdentifier("consts"),
+        ts.factory.createArrayLiteralExpression(
+            consts
+        )
+    ));
+
   }
 
   return properties;

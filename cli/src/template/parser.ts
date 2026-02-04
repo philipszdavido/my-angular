@@ -1,6 +1,6 @@
 import ts = require("typescript");
 import { parse } from "node-html-parser";
-import { ViewGenerator } from "./viewGenerator";
+import { ViewGenerator } from "./view_generator";
 import {factory} from "typescript";
 
 const parseConfig = {
@@ -50,7 +50,7 @@ export class Parser {
     const html = this.template;
 
     const generator = new ViewGenerator();
-    const { stmts, updateStmts } = generator.generateViewCode(html);
+    const { stmts, updateStmts, consts } = generator.generateViewCode(html);
 
 
    const creationNode = ts.factory.createIfStatement(
@@ -73,7 +73,10 @@ export class Parser {
        undefined
    )
 
-    return ts.factory.createBlock([creationNode, updateNode], true)
+    return {
+     block: ts.factory.createBlock([creationNode, updateNode], true),
+      consts: consts
+    }
 
   }
 }
