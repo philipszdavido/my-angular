@@ -1,3 +1,6 @@
+const CREATE = 1;
+const UPDATE = 2;
+
 export type TView = {
   blueprint: any[];
   firstCreatePass: boolean;
@@ -46,8 +49,14 @@ export function ɵɵelementStart(index: number, tag: string) {
     // check the tag is a component
     // search in tview directive registry
 
-    const componentType = tView.directiveRegistry.find(
-      (directive) => directive.ɵcmp.selectors[0] == tag,
+    const componentType = tView.directiveRegistry?.find(
+      (directive) => {
+        // directive.ɵcmp.selectors[0] == tag
+        const found = directive.ɵcmp.selectors?.some(t => t == tag)
+
+        return !!found;
+
+      }
     );
 
     const isComponent = componentType || false;
@@ -93,21 +102,31 @@ export function ɵɵadvance(delta: number = 1) {
   runtime.cursor = lView.data[delta];
 }
 
-export function ɵɵtextInterpolate(prefix: string, value: any, suffix: string) {
+export function ɵɵtextInterpolate(...args: string[]/*prefix: string, value: any, suffix: string*/) {
   const node = runtime.cursor as Text;
-  const newValue = prefix + value + suffix;
+  const newValue = args.reduce((pV, cV, index) => pV + cV, '') // prefix + value + suffix;
 
   if (node.textContent !== newValue) {
     node.textContent = newValue;
   }
 }
 
-// ɵɵlistener("click", () => ctx.handleEvent('click')())
+function listenerCallback(lView: LView, fn: any) {
+  return (evt: Event ) => {
+    enterView(lView)
+    fn(evt);
+    lView.tView.template(UPDATE, lView.context);
+    leaveView();
+  }
+}
+
+// ɵɵlistener("click", () => ctx.handleEvent('click'))
 export function ɵɵlistener(listener: string, fn: () => void) {
 
-  const lView = runtime.currentLView!;
+  const parent =
+      runtime.parentStack[runtime.parentStack.length - 1];
 
-    lView.host.addEventListener(listener, fn);
+    parent.addEventListener(listener, listenerCallback(runtime.currentLView, fn));
 
 }
 
@@ -143,11 +162,11 @@ function renderComponent(component: any, tView: TView, el: any, parent: LView) {
       console.log(componentDef, lView);
 
       enterView(lView);
-      componentDef.template(1, componentInstance);
+      componentDef.template(CREATE, componentInstance);
       componentDef.tView.firstCreatePass = false;
 
       // First update pass
-      componentDef.template(2, componentInstance);
+      componentDef.template(UPDATE, componentInstance);
 
       leaveView();
 

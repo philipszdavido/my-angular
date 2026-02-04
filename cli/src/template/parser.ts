@@ -33,8 +33,13 @@ const parseConfig = {
   },
 };
 
+const CREATE = "1";
+const UPDATE = "2";
+
 export class Parser {
+
   template: string;
+
   constructor(template: string) {
     this.template = template;
   }
@@ -49,18 +54,20 @@ export class Parser {
 
 
    const creationNode = ts.factory.createIfStatement(
-      ts.factory.createLogicalAnd(
+       factory.createBinaryExpression(
         ts.factory.createIdentifier("rf"),
-        ts.factory.createIdentifier("1")
+           ts.SyntaxKind.AmpersandToken,
+        ts.factory.createIdentifier(CREATE)
       ),
       ts.factory.createBlock([...stmts], true),
       undefined
     );
 
    const updateNode = factory.createIfStatement(
-       factory.createLogicalAnd(
+       factory.createBinaryExpression(
            factory.createIdentifier("rf"),
-           factory.createIdentifier("2")
+           ts.SyntaxKind.AmpersandToken,
+           factory.createIdentifier(UPDATE)
        ),
        factory.createBlock([...updateStmts], true),
        undefined

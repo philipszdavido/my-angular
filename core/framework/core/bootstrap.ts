@@ -1,5 +1,6 @@
 import { LView, enterView, leaveView } from "./core";
 import { DefaultDomRenderer2 } from "./browser";
+import { setupZone } from "./zone";
 
 /**
  * Locates the host native element, used for bootstrapping existing nodes into rendering pipeline.
@@ -70,11 +71,16 @@ export function bootstrapApplication(component: any) {
   console.log(componentDef, lView);
 
   enterView(lView);
+
   componentDef.template(1, componentInstance);
   componentDef.tView.firstCreatePass = false;
 
   // First update pass
   componentDef.template(2, componentInstance);
+
+  setupZone(() => {
+    componentDef.template(2, componentInstance);
+  });
 
   leaveView();
 }
