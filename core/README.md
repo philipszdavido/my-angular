@@ -1,11 +1,11 @@
-# my-angular
-This is my own custom Angular 2+ framework
+# Mini-NG Core
+This is my own JavaScript framework
 
 # Usage
 
 ```typescript
 //person.component.ts
-import { Component } from './framework/Component';
+import { Component } from '@mini-ng/core';
 
 @Component({
      selector: 'test',
@@ -19,13 +19,13 @@ export class Person {
 ```
 ```typescript
 main.ts
-import { bootstrap } from './framework/bootstrap';
+import { bootstrapApplication } from '@mini-ng/core';
 import Person from 'person.component'
 
-bootstrap(Person);
+bootstrapApplication(Person);
 ```
 
-## Angular tech to achieve
+## Tech to achieve
 
 * Change detection
 * template compiler
