@@ -30,9 +30,9 @@ export function transformPlugin(
 
         const metadata = extractComponentMetadata(getComponentDecorator(node));
 
-        const factoryNode = createFactoryStatic(node.name?.text);
+        const factoryNode = createFactoryStatic(node.name?.text, node);
 
-        const cmpDefNode = createDefineComponentStatic(componentName, metadata);
+        const cmpDefNode = createDefineComponentStatic(componentName, metadata, node);
 
         return updateClassDeclaration(node, [factoryNode, cmpDefNode]);
       }

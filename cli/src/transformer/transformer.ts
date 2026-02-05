@@ -1,6 +1,7 @@
 import * as ts from "typescript";
 import { Parser } from "../template/parser";
 import {CSSParser} from "../css_parser/css_parser";
+import {i0, ɵcmp, ɵfac, ɵɵdefineComponent} from "../constants/constants";
 
 type ComponentMetadata = {
   selector: ts.PropertyAssignment;
@@ -21,7 +22,7 @@ type ComponentMetadata = {
 export function hasComponentDecorator(node: ts.ClassDeclaration) {
   const decorators = ts.getDecorators(node);
   return (
-    decorators &&
+    decorators && ts.canHaveDecorators(node) &&
     decorators.some(
       (decorator) =>
         ts.isCallExpression(decorator.expression) &&
@@ -157,12 +158,12 @@ function getMetadataProperty(
 
 //   return /*createClassStaticBlock(*/ factory.createBlock([node], true); //);
 // }
-export function createFactoryStatic(componentName: string) {
+export function createFactoryStatic(componentName: string, node: ts.Node) {
   const f = ts.factory;
 
   return f.createPropertyDeclaration(
     [f.createModifier(ts.SyntaxKind.StaticKeyword)],
-    "ɵfac",
+    ɵfac,
     undefined,
     undefined,
     f.createFunctionExpression(
@@ -240,23 +241,24 @@ export function createFactoryStatic(componentName: string) {
 export function createDefineComponentStatic(
   componentName: string,
   metadata: ComponentMetadata,
+  node: ts.Node
 ) {
   const f = ts.factory;
 
   return f.createPropertyDeclaration(
     [f.createModifier(ts.SyntaxKind.StaticKeyword)],
-    "ɵcmp",
+    ɵcmp,
     undefined,
     undefined,
     f.createCallExpression(
       f.createPropertyAccessExpression(
-        f.createIdentifier("i0"),
-        "ɵɵdefineComponent",
+        f.createIdentifier(i0),
+        ɵɵdefineComponent,
       ),
       undefined,
       [
         f.createObjectLiteralExpression(
-          createCmpDefinitionPropertiesNode(componentName, metadata),
+          createCmpDefinitionPropertiesNode(componentName, metadata, node),
           true,
         ),
       ],
@@ -266,7 +268,8 @@ export function createDefineComponentStatic(
 
 function createCmpDefinitionPropertiesNode(
   componentName: string,
-  metadata: ComponentMetadata
+  metadata: ComponentMetadata,
+  node: ts.Node
 ): ts.ObjectLiteralElementLike[] {
   const properties = [];
 
@@ -397,35 +400,76 @@ function createCmpDefinitionPropertiesNode(
     ))
   }
 
+  if (ts.isClassDeclaration(node)) {
+    const { inputs, outputs } = extractInputsOutputs(node);
+
+    if (inputs.length > 0) {
+      properties.push(
+          ts.factory.createPropertyAssignment(
+              ts.factory.createIdentifier("inputs"),
+              ts.factory.createObjectLiteralExpression(
+                  inputs.map(input => ts.factory.createPropertyAssignment(input, ts.factory.createStringLiteral(input)))
+              )
+          )
+      )
+    }
+
+    if (outputs.length > 0) {
+      properties.push(
+          ts.factory.createPropertyAssignment(
+              ts.factory.createIdentifier("outputs"),
+              ts.factory.createObjectLiteralExpression(
+                  outputs.map(output => ts.factory.createPropertyAssignment(output, ts.factory.createStringLiteral(output)))
+              )
+          )
+      )
+    }
+  }
+
   return properties;
 }
 
-export function updateClassDeclaration_(
-  node: ts.ClassDeclaration,
-  staticBlocks: ts.Block[]
-) {
-  const blocks = staticBlocks.map((staticBlock) =>
-    ts.factory.createClassStaticBlockDeclaration(staticBlock)
-  );
+function extractInputsOutputs(node: ts.ClassDeclaration) {
+  const inputs: string[] = [];
+  const outputs: string[] = [];
 
-  // factory.updateClassDeclaration(
-  //   node,
-  //   undefined, // decorators removed
-  //   node.modifiers,
-  //   node.name,
-  //   node.typeParameters,
-  //   node.heritageClauses,
-  //   [...node.members, facStatic, cmpStatic],
-  // );
+  for (const member of node.members) {
+    if (!ts.isPropertyDeclaration(member)) continue;
+    if (!member.name || !ts.isIdentifier(member.name)) continue;
 
-  return ts.factory.updateClassDeclaration(
-    node,
-    undefined,//node.modifiers,
-    node.name,
-    node.typeParameters,
-    node.heritageClauses,
-    [...node.members, ...blocks]
-  );
+    const decorators = ts.canHaveDecorators(member)
+        ? ts.getDecorators(member)
+        : undefined;
+
+    if (!decorators) continue;
+
+    for (const dec of decorators) {
+      if (isInputOutputDecorator(dec, "Input")) {
+        inputs.push(member.name.text);
+        continue;
+      }
+      if (isInputOutputDecorator(dec, "Output")) {
+        outputs.push(member.name.text);
+      }
+    }
+  }
+
+  return { inputs, outputs };
+}
+
+function isInputOutputDecorator(dec: ts.Decorator, inputOutput: string): boolean {
+  const expr = dec.expression;
+
+  if (ts.isIdentifier(expr)) {
+    return expr.text === inputOutput;
+  }
+
+  if (ts.isCallExpression(expr)) {
+    return ts.isIdentifier(expr.expression)
+        && expr.expression.text === inputOutput;
+  }
+
+  return false;
 }
 
 function preserveExport(node: ts.ClassDeclaration): ts.Modifier[] | undefined {
@@ -443,23 +487,14 @@ export function updateClassDeclaration(
   node: ts.ClassDeclaration,
   newMembers: ts.ClassElement[],
 ) {
-  // return ts.factory.updateClassDeclaration(
-  //   node,
-  //   /* decorators */ undefined,
-  //   //node.modifiers,
-  //   node.name,
-  //   node.typeParameters,
-  //   node.heritageClauses,
-  //   [...node.members, ...newMembers],
-  // );
 
   return ts.factory.updateClassDeclaration(
     node,
-    preserveExport(node), // ✅ keeps 'export'
+    preserveExport(node), // keeps 'export'
     node.name,
     node.typeParameters,
     node.heritageClauses,
-    [...node.members, ...newMembers], // your static blocks
+    [...node.members, ...newMembers], // static blocks
   );
 
 }
