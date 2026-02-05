@@ -47,6 +47,9 @@ export function ɵɵadvance(delta: number = 1) {
 }
 
 export function ɵɵdefineComponent(def: any) {
+
+  const compId = getComponentId(def);
+
   const tView: TView = {
     blueprint: new Array(def.decls).fill(null),
     firstCreatePass: true,
@@ -54,11 +57,11 @@ export function ɵɵdefineComponent(def: any) {
     directiveRegistry: def.dependencies,
     consts: def.consts,
     styles: def.styles,
-    id: getComponentId(def),
+    id: compId,
   };
 
   def.tView = tView;
-  def.id = getComponentId(def);
+  def.id = compId;
 
   return def;
 }

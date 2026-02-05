@@ -6,7 +6,7 @@ import {
   getComponentDecorator,
   hasComponentDecorator,
   updateClassDeclaration,
-} from "./transformer";
+} from "../transformer/transformer";
 
 export function transformPlugin(
   program: ts.Program,

@@ -1,6 +1,6 @@
 import * as ts from "typescript";
-import { Parser } from "./template/parser";
-import {CSSParser} from "./css_parser/css_parser";
+import { Parser } from "../template/parser";
+import {CSSParser} from "../css_parser/css_parser";
 
 type ComponentMetadata = {
   selector: ts.PropertyAssignment;
