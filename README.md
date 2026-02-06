@@ -1,5 +1,7 @@
 # Mini-Ng
 
+![](/logo.png)
+
 A JavaScript framework with a huge inspiration from the Angular framework.
 
 # How it works
