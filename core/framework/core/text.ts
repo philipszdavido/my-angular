@@ -11,15 +11,14 @@ export function ɵɵtext(index: number, value = '') {
         lView.data[index] = text;
     }
 
-    const parent =
-        runtime.parentStack[runtime.parentStack.length - 1] ?? document.body;
+    const parent = runtime.currentTNode;
 
     parent.appendChild(text);
-    runtime.cursor = text;
+
 }
 
 export function ɵɵtextInterpolate(...args: string[]/*prefix: string, value: any, suffix: string*/) {
-    const node = runtime.cursor as Text;
+    const node = runtime.currentLView.data[runtime.selectedIndex]//runtime.cursor as Text;
     const newValue = args.reduce((pV, cV, index) => pV + cV, '') // prefix + value + suffix;
 
     if (node.textContent !== newValue) {

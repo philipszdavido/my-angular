@@ -10,6 +10,7 @@ export function ɵɵelementStart(index: number, tag: string, attrsIndex?: number
     const tView = lView.tView;
 
     let el = lView.data[index];
+    runtime.currentTNode = el;
 
     if (tView.firstCreatePass) {
         el = document.createElement(tag);
@@ -28,40 +29,38 @@ export function ɵɵelementStart(index: number, tag: string, attrsIndex?: number
         const id_value = "_ngcontent-" + id;
         (el as HTMLElement).setAttribute(id_value, id_value);
 
+        runtime.currentTNode = el;
+
         // check the tag is a component
         // search in tview directive registry
 
-        const componentType = tView.directiveRegistry?.find(
-            (directive) => {
-                // directive.ɵcmp.selectors[0] == tag
-                const found = directive.ɵcmp.selectors?.some(t => t == tag)
-
-                return !!found;
-
-            }
-        );
+        const componentType = getComponent(tView, tag);
 
         const isComponent = componentType || false;
 
         if (isComponent) {
-            renderComponent(componentType, tView, el, lView.parent);
+            renderComponent(componentType, tView, el, lView, index);
         }
 
     }
 
-    const parent =
-        runtime.parentStack[runtime.parentStack.length - 1] ?? document.body;
+    const parent = lView.host;
 
     parent.appendChild(el);
-    runtime.parentStack.push(el);
-    runtime.cursor = el;
+
 }
 
 export function ɵɵelementEnd() {
-    runtime.parentStack.pop();
+
+    if (runtime.currentLView.parent) {
+        runtime.currentTNode = runtime.currentLView.parent.host;
+    } else {
+        runtime.currentTNode = runtime.currentLView.host;
+    }
+
 }
 
-function renderComponent(component: any, tView: TView, el: any, parent: LView) {
+function renderComponent(component: any, tView: TView, el: any, parent: LView, index: number) {
 
     const componentDef = component.ɵcmp;
     const componentInstance = component.ɵfac();
@@ -73,10 +72,13 @@ function renderComponent(component: any, tView: TView, el: any, parent: LView) {
         const lView: LView = {
             tView: componentDef.tView,
             data: [...componentDef.tView.blueprint],
+            instances: [...componentDef.tView.blueprint],
             parent: parent,
             host: el,
             context: componentInstance,
         };
+
+        parent.instances[index] = lView;
 
         enterView(lView);
         templateFn(CREATE, componentInstance);
@@ -102,4 +104,19 @@ function shimCss(componentIdentifier: string, styleText: string) {
     const style = document.createElement("style");
     style.textContent = styleText;
     document.head.appendChild(style);
+}
+
+export function getComponent(tView: TView, tag: string) {
+    const componentType = tView.directiveRegistry?.find(
+        (directive) => {
+
+            const found = directive.ɵcmp.selectors?.some(t => t == tag)
+
+            return !!found;
+
+        }
+    );
+
+    return componentType;
+
 }
