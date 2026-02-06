@@ -10,6 +10,15 @@ function listenerCallback(lView: LView, fn: any) {
     }
 }
 
+function listenerOutputCallback(lView: LView, fn: any) {
+    return (evt: any ) => {
+        enterView(lView)
+        fn(evt);
+        lView.tView.template(UPDATE, lView.context);
+        leaveView();
+    }
+}
+
 // ɵɵlistener("click", () => ctx.handleEvent('click'))
 export function ɵɵlistener(listener: string, fn: () => void) {
 
@@ -29,7 +38,8 @@ export function ɵɵlistener(listener: string, fn: () => void) {
         for( let output in childLView.tView.outputs) {
 
             if (output == listener) {
-                childLView.context[listener].addEventListener(/*listener, */fn);
+                // childLView.context[listener].addEventListener(/*listener, */fn);
+                childLView.context[listener].addEventListener(listenerOutputCallback(runtime.currentLView, fn));
             }
 
         }
