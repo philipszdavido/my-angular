@@ -7,6 +7,7 @@ import {ExpressionParser} from "../expr_parser/expr_parser";
 import {RenderFlags} from "../render/flags";
 import {AttributeMarker} from "./attribute_marker";
 import {
+  $event,
   ctx,
   i0,
   ɵɵadvance,
@@ -303,7 +304,9 @@ function generateListenerNode(eventName: string, tag: string, index: number, han
         ts.factory.createArrowFunction(
           undefined,
           undefined,
-          [],
+          [ts.factory.createParameterDeclaration(
+              undefined, undefined, ts.factory.createIdentifier($event), undefined, undefined, undefined
+          )],
           undefined,
           ts.factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
           ts.factory.createBlock(
