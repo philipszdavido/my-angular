@@ -130,17 +130,57 @@ export interface Component extends Directive {}
 export interface InputDecorator {}
 export interface Input {}
 
-export const Input: InputDecorator = makePropDecorator(
-    'Input',
-    (arg?: string | {alias?: string; required?: boolean}) => {
-        if (!arg) {
-            return {};
-        }
-        return typeof arg === 'string' ? {alias: arg} : arg;
-    },
-);
+// export const Input: InputDecorator = makePropDecorator(
+//     'Input',
+//     (arg?: string | {alias?: string; required?: boolean}) => {
+//         if (!arg) {
+//             return {};
+//         }
+//         return typeof arg === 'string' ? {alias: arg} : arg;
+//     },
+// );
 
 export interface OutputDecorator {}
 export interface Output {}
 
-export const Output: OutputDecorator = makePropDecorator('Output', (alias?: string) => ({alias}));
+// export const Output: OutputDecorator = makePropDecorator('Output', (alias?: string) => ({alias}));
+
+// export function Input(alias?: string) {
+//     return function (initialValue: any, context: ClassFieldDecoratorContext) {
+//         if (context.kind !== 'field') return;
+//
+//         context.addInitializer(function () {
+//             const ctor = this.constructor;
+//             ctor.ɵinputs ??= {};
+//             ctor.ɵinputs[context.name] = alias ?? context.name;
+//         });
+//
+//         return initialValue;
+//     };
+// }
+
+// export function Output(alias?: string) {
+//     return function (initialValue: any, context: ClassFieldDecoratorContext) {
+//         if (context.kind !== 'field') return;
+//
+//         context.addInitializer(function () {
+//             const ctor = this.constructor;
+//             ctor.ɵoutputs ??= {};
+//             ctor.ɵoutputs[context.name] = alias ?? context.name;
+//         });
+//
+//         return initialValue;
+//     };
+// }
+
+export function Input() {
+    return function (initialValue: any) {
+        return initialValue;
+    };
+}
+
+export function Output() {
+    return function (initialValue: any) {
+        return initialValue;
+    };
+}

@@ -133,7 +133,7 @@ export type TView = {
   consts: any[][];
   styles: string[];
   inputs: { string: string };
-  outputs: any;
+  outputs: { string: string };
   id: string;
 };
 

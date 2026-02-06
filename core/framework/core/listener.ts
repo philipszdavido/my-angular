@@ -1,4 +1,5 @@
 import {enterView, leaveView, LView, runtime, UPDATE} from "./core";
+import {getComponent} from "./element";
 
 function listenerCallback(lView: LView, fn: any) {
     return (evt: Event ) => {
@@ -14,6 +15,29 @@ export function ɵɵlistener(listener: string, fn: () => void) {
 
     const parent = runtime.currentTNode;
 
-    parent.addEventListener(listener, listenerCallback(runtime.currentLView, fn));
+    const lView = runtime.currentLView!;
+    const tView = lView.tView;
+
+    const componentType = getComponent(tView, runtime.currentTNode.nodeName.toLowerCase());
+
+    const isComponent = componentType || false;
+
+    if (isComponent) {
+
+        const childLView = lView.instances[runtime.selectedIndex];
+
+        for( let output in childLView.tView.outputs) {
+
+            if (output == listener) {
+                childLView.context[listener].addEventListener(/*listener, */fn);
+            }
+
+        }
+
+    } else {
+
+        parent.addEventListener(listener, listenerCallback(runtime.currentLView, fn));
+
+    }
 
 }

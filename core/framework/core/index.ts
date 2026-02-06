@@ -6,3 +6,4 @@ export * from "./text";
 export * from "./element"
 export * from "./property"
 export * from "./listener"
+export { EventEmitter } from "./EventEmitter"

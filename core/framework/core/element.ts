@@ -30,6 +30,7 @@ export function ɵɵelementStart(index: number, tag: string, attrsIndex?: number
         (el as HTMLElement).setAttribute(id_value, id_value);
 
         runtime.currentTNode = el;
+        runtime.selectedIndex = index;
 
         // check the tag is a component
         // search in tview directive registry
@@ -57,6 +58,7 @@ export function ɵɵelementEnd() {
     } else {
         runtime.currentTNode = runtime.currentLView.host;
     }
+    runtime.selectedIndex = -1;
 
 }
 
