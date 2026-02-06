@@ -17,6 +17,14 @@ export function createTransformer(ctxVariable: string) {
     return (context: ts.TransformationContext) => {
         const visitor: ts.Visitor = (node: ts.Node): ts.Node => {
 
+            if (ts.isStringLiteral(node)) {
+                return ts.factory.createStringLiteral(node.text);
+            }
+
+            if (ts.isNumericLiteral(node)) {
+                return ts.factory.createNumericLiteral(node.text);
+            }
+
             if(ts.isIdentifier(node)) {
                 return ts.factory.createPropertyAccessExpression(
                     ts.factory.createIdentifier(ctxVariable),

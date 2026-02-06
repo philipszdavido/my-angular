@@ -1,4 +1,4 @@
-import { LView, enterView, leaveView } from "./core";
+import {LView, enterView, leaveView, CREATE, UPDATE} from "./core";
 import { DefaultDomRenderer2 } from "./browser";
 import { setupZone } from "./zone";
 
@@ -63,6 +63,7 @@ export function bootstrapApplication(component: any) {
   const lView: LView = {
     tView: componentDef.tView,
     data: [...componentDef.tView.blueprint],
+    instances: [...componentDef.tView.blueprint],
     parent: null,
     host: hostElement,
     context: componentInstance
@@ -70,14 +71,14 @@ export function bootstrapApplication(component: any) {
 
   enterView(lView);
 
-  componentDef.template(1, componentInstance);
+  componentDef.template(CREATE, componentInstance);
   componentDef.tView.firstCreatePass = false;
 
   // First update pass
-  componentDef.template(2, componentInstance);
+  componentDef.template(UPDATE, componentInstance);
 
   setupZone(() => {
-    componentDef.template(2, componentInstance);
+    componentDef.template(UPDATE, componentInstance);
   });
 
   leaveView();

@@ -488,15 +488,42 @@ export function updateClassDeclaration(
   newMembers: ts.ClassElement[],
 ) {
 
+  const members = node.members.map(m =>
+      stripDecoratorsFromMember(m, ts.factory)
+  );
+
   return ts.factory.updateClassDeclaration(
     node,
     preserveExport(node), // keeps 'export'
     node.name,
     node.typeParameters,
     node.heritageClauses,
-    [...node.members, ...newMembers], // static blocks
+    [...members, ...newMembers], // static blocks
   );
 
+}
+
+function stripDecoratorsFromMember(
+    member: ts.ClassElement,
+    factory: ts.NodeFactory
+): ts.ClassElement {
+  if (!ts.canHaveDecorators(member)) return member;
+
+  const decorators = ts.getDecorators(member);
+  if (!decorators || decorators.length === 0) return member;
+
+  if (ts.isPropertyDeclaration(member)) {
+    return factory.updatePropertyDeclaration(
+        member,
+        /* modifiers */ member.modifiers,
+        /* name */ member.name,
+        /* questionOrExclamationToken */ member.questionToken,
+        /* type */ member.type,
+        /* initializer */ member.initializer
+    );
+  }
+
+  return member;
 }
 
 export function createClassStaticBlock(node: ts.Block) {

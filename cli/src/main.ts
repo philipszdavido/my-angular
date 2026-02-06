@@ -1,13 +1,13 @@
 import * as glob from "glob";
 import * as ts from "typescript";
-import { transformPlugin } from "./visitor";
+import { transformPlugin } from "./visitor/visitor";
 import { build } from "./bundle";
 import { bundleProject } from "./bundle-vite"
 
 // /Users/chidumennamdi/Documents/MacBookPro2020/developerse/my-angular/test
 // "/Users/chidumennamdi/Downloads/MacBookPro2020/developerse/my-angular/test"
 process.chdir(
-  "/Users/chidumennamdi/Documents/MacBookPro2020/developerse/my-angular/mini-ng-test",
+  "/Users/chidumennamdi/Documents/MacBookPro2020/developerse/mini-ng/mini-ng-test",
 );
 
 const currentDirectory = process.cwd();
@@ -42,6 +42,7 @@ const program = ts.createProgram({
     experimentalDecorators: false,
     emitDecoratorMetadata: false,
     outDir: "./dist",
+    removeComments: true
   },
 });
 
@@ -51,6 +52,9 @@ const emitResult = program.emit(undefined, undefined, undefined, undefined, {
 
 bundleProject(currentDirectory).then(() => {
   console.log("Build and bundling completed.");
+  const exitCode = emitResult.emitSkipped ? 1 : 0;
+  process.exit(exitCode);
+
 });
 
 const allDiagnostics = ts
@@ -74,6 +78,3 @@ allDiagnostics.forEach((diagnostic) => {
     console.log(ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"));
   }
 });
-
-// const exitCode = emitResult.emitSkipped ? 1 : 0;
-// process.exit(exitCode);

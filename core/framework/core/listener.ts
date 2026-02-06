@@ -12,8 +12,7 @@ function listenerCallback(lView: LView, fn: any) {
 // ɵɵlistener("click", () => ctx.handleEvent('click'))
 export function ɵɵlistener(listener: string, fn: () => void) {
 
-    const parent =
-        runtime.parentStack[runtime.parentStack.length - 1];
+    const parent = runtime.currentTNode;
 
     parent.addEventListener(listener, listenerCallback(runtime.currentLView, fn));
 

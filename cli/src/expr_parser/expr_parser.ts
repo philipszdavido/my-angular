@@ -1,5 +1,4 @@
 import * as ts from "typescript";
-import { factory, Identifier } from "typescript";
 import {createTransformer} from "./parse";
 
 export class ExpressionParser {

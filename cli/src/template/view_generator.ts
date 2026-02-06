@@ -94,6 +94,8 @@ export class ViewGenerator {
     const attrArray = [];
     let attrIndex;
 
+    const tempStmts = [];
+
     // Process attributes
     for (const attr in attributes) {
       if (attr.startsWith("(")) {
@@ -102,7 +104,7 @@ export class ViewGenerator {
         creation += `, ${index + 1}`;
 
         creation += `);\ni0.ɵɵlistener("${eventName}", function ${tag}_Template_${eventName}_${index}_listener() { return ctx.${attributes[attr]}(); })`;
-        this.stmts.push(
+        tempStmts.push(
             generateListenerNode(eventName, tag, index + 1, attributes[attr])
         )
       } else if (attr.startsWith("[")) {
@@ -112,6 +114,7 @@ export class ViewGenerator {
 
         this.updateStmts.push(generateAdvanceNode(index.toString()));
         this.updateStmts.push(generatePropertyNode(propertyName, attributes[attr]));
+        console.log(attr, attributes[attr], attributes)
 
         update += `i0.ɵɵproperty("${propertyName}", ctx.${attributes[attr]});\n`;
       } else {
@@ -139,7 +142,7 @@ export class ViewGenerator {
     }
     creation += `);\n`;
 
-    this.stmts.push(generateElementStartNode(index, tag, /* Object.keys(attributes).length == 0 ? null : index + 1,*/ attrIndex));
+    this.stmts.push(generateElementStartNode(index, tag, /* Object.keys(attributes).length == 0 ? null : index + 1,*/ attrIndex), ...tempStmts);
 
     // Process children
     let childIndex = index + 1;
