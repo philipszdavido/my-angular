@@ -1,7 +1,7 @@
 {
-  "name": "myAngular",
+  "name": "mini-ng",
   "version": "0.0.1",
-  "description": "A JS framework inspired by Angular",
+  "description": "A JavaScript framework inspired by Angular",
   "main": "dist/index.js",
   "bin": {
     "serve": "./bin/ng"
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/philipszdavido/mypluralize.git"
+    "url": "git+"
   },
   "keywords": [],
   "author": "Chidume Nnamdi <kurtwanger40@gmail.com>",
@@ -34,8 +34,10 @@
     "coveralls": "^3.0.0",
     "istanbul": "^0.4.5",
     "mocha": "^4.0.1",
+    "terser": "^5.46.0",
     "ts-node": "^3.3.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vite": "^7.3.1"
   },
   "dependencies": {
     "@types/glob": "^8.1.0",
@@ -49,6 +51,7 @@
     "node-html-parser": "^6.1.13",
     "parse5": "^7.1.2",
     "pluralize": "^7.0.0",
+    "postcss": "^8.5.6",
     "rollup": "^4.57.1",
     "webpack": "^5.89.0",
     "webpack-dev-server": "^4.15.1"

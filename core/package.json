@@ -9,6 +9,15 @@
       "import": "./dist/core.mjs",
       "require": "./dist/core.cjs.js",
       "default": "./dist/core.umd.js"
+    },
+    "./package.json": {
+      "default": "./package.json"
+    },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "esm2022": "./dist/core.mjs",
+      "esm": "./dist/core.mjs",
+      "default": "./dist/core.mjs"
     }
   },
   "files": [
@@ -48,5 +57,7 @@
   },
   "dependencies": {
     "tslib": "^2.8.1"
-  }
+  },
+  "typings": "./dist/index.d.ts",
+  "type": "module"
 }
