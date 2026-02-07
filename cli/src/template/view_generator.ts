@@ -36,12 +36,19 @@ const SVG_TAG_REWRITE: Record<string, string> = {
   foreignobject: 'foreignObject',
 };
 
+export type Template = {
+  functionName: string;
+  updateStmts: ts.ExpressionStatement[],
+  stmts: ts.ExpressionStatement[],
+  templateStmts: Template[]
+}
 
 export class ViewGenerator {
   private options: ViewGeneratorOptions;
 
   private readonly stmts: ts.ExpressionStatement[] = [];
   private readonly updateStmts: ts.ExpressionStatement[] = [];
+  private readonly templateStmts: Template[] = []
   private readonly consts: ts.Expression[] = [];
   private slot = 0;
 
@@ -69,6 +76,7 @@ export class ViewGenerator {
     return {
       stmts: this.stmts,
       updateStmts: this.updateStmts,
+      templateStmts: this.templateStmts,
       consts: this.consts,
       codeString: this.wrapCode(creationCode, updateCode),
     };
@@ -84,7 +92,7 @@ export class ViewGenerator {
     if (node instanceof Element) {
       const tag = node.tagName;
       if(templatesNodeNames.includes(tag)) {
-        return this.processTemplateElement(node, index)
+        return /*{ creation: "", update: "" };*/ this.processTemplateElement(tag, node, index)
       }
 
       return this.processElement(node, index);
@@ -264,9 +272,77 @@ export class ViewGenerator {
     `;
   }
 
-  private processTemplateElement(node: Element, index: number) {
+  private processTemplateElement(tag: string, node: Element, index: number) {
+
+    if (tag === "ng-if") {
+      this.processNgIf(node, index);
+    }
+
     return {creation: "", update: ""};
+
   }
+
+  processNgIf(node: Element, index: number) {
+    const functionName = "Template_" + index + "tag" + Date.now();
+
+    // if tag == ng-if
+    // create a function outside of this class
+    let cond_expr = ""
+    for(const attr in node.attribs) {
+      if (attr == "condition") {
+        cond_expr = node.attribs[attr];
+        break;
+      }
+    }
+
+    const exprParser = new ExpressionParser();
+    const exprSourceFile = exprParser.parse(cond_expr);
+
+    const templateNode = ts.factory.createExpressionStatement(
+        ts.factory.createCallExpression(
+            ts.factory.createPropertyAccessExpression(
+                ts.factory.createIdentifier(i0),
+                ts.factory.createIdentifier("ɵɵtemplate")
+            ),
+            undefined,
+            // @ts-ignore
+            [exprSourceFile.statements[0].expression]
+        )
+    );
+
+    const updateTemplateNode = ts.factory.createExpressionStatement(
+        ts.factory.createCallExpression(
+            ts.factory.createPropertyAccessExpression(
+                ts.factory.createIdentifier(i0),
+                ts.factory.createIdentifier("ɵɵconditional")
+            ),
+            undefined,
+            // @ts-ignore
+            [exprSourceFile.statements[0].expression]
+        )
+    );
+
+    const viewGenerator = new ViewGenerator();
+    viewGenerator.processChildNodes(node);
+
+    this.templateStmts.push({
+      functionName: functionName,
+      updateStmts: [...viewGenerator.updateStmts],
+      stmts: [...viewGenerator.stmts],
+      templateStmts: [...viewGenerator.templateStmts]
+    });
+
+    this.stmts.push(templateNode)
+    this.updateStmts.push(updateTemplateNode)
+
+  }
+
+  processChildNodes(node: Element) {
+    node.childNodes.forEach((childNode, index) => {
+      this.processNode(childNode, index)
+    })
+  }
+
 }
 
 function generateElementStartNode(

@@ -50,7 +50,7 @@ export class Parser {
     const html = this.template;
 
     const generator = new ViewGenerator();
-    const { stmts, updateStmts, consts } = generator.generateViewCode(html);
+    const { stmts, updateStmts, consts, templateStmts } = generator.generateViewCode(html);
 
 
    const creationNode = ts.factory.createIfStatement(
@@ -75,7 +75,8 @@ export class Parser {
 
     return {
      block: ts.factory.createBlock([creationNode, updateNode], true),
-      consts: consts
+      consts: consts,
+        templateStmts: templateStmts
     }
 
   }

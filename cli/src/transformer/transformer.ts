@@ -5,6 +5,8 @@ import { Parser } from "../template/parser";
 import {CSSParser} from "../css_parser/css_parser";
 import {i0, ɵcmp, ɵfac, ɵɵdefineComponent} from "../constants/constants";
 import * as path from "node:path";
+import {Template} from "../template/view_generator";
+import {factory} from "typescript";
 
 type ComponentMetadata = {
   selector: ts.PropertyAssignment;
@@ -247,7 +249,8 @@ export function createFactoryStatic(componentName: string, node: ts.Node) {
 export function createDefineComponentStatic(
   componentName: string,
   metadata: ComponentMetadata,
-  node: ts.Node
+  node: ts.Node,
+  hoisted: ts.Statement[]
 ) {
   const f = ts.factory;
 
@@ -264,7 +267,7 @@ export function createDefineComponentStatic(
       undefined,
       [
         f.createObjectLiteralExpression(
-          createCmpDefinitionPropertiesNode(componentName, metadata, node),
+          createCmpDefinitionPropertiesNode(componentName, metadata, node, hoisted),
           true,
         ),
       ],
@@ -275,7 +278,8 @@ export function createDefineComponentStatic(
 function createCmpDefinitionPropertiesNode(
   componentName: string,
   metadata: ComponentMetadata,
-  node: ts.Node
+  node: ts.Node,
+  hoisted: ts.Statement[]
 ): ts.ObjectLiteralElementLike[] {
   const sourceFile = node.getSourceFile();
   const tsFilePath = sourceFile.fileName;
@@ -344,9 +348,12 @@ function createCmpDefinitionPropertiesNode(
     // read templateUrlPath
     const templateString = readTemplate(tsFilePath, templateUrlPath);
 
-    const { templateNode, constsNode} = generateTemplateInstructions(componentName, templateString);
+    const { templateNode, constsNode, templateStmts} = generateTemplateInstructions(componentName, templateString);
     properties.push(templateNode);
     properties.push(constsNode);
+
+    generateTemplateStmts(templateStmts, sourceFile, hoisted)
+
 
   }
 
@@ -357,9 +364,11 @@ function createCmpDefinitionPropertiesNode(
 
     const templateString = (template.initializer as ts.StringLiteral).text;
 
-    const { templateNode, constsNode} = generateTemplateInstructions(componentName, templateString);
+    const { templateNode, constsNode, templateStmts} = generateTemplateInstructions(componentName, templateString);
     properties.push(templateNode);
     properties.push(constsNode);
+
+    generateTemplateStmts(templateStmts, sourceFile, hoisted)
 
     // const context = "ctx";
     // const renderFlag = "rf";
@@ -514,7 +523,7 @@ function generateTemplateInstructions(componentName: string, templateString: str
     const functionName = componentName + "_Template";
 
     const parser = new Parser(templateString);
-    const { block, consts} = parser.parse();
+    const { block, consts, templateStmts} = parser.parse();
 
     const template = ts.factory.createPropertyAssignment(
             "template",
@@ -557,7 +566,8 @@ function generateTemplateInstructions(componentName: string, templateString: str
 
     return  {
       templateNode: template,
-      constsNode: constsExpr
+      constsNode: constsExpr,
+      templateStmts
     }
 
 }
@@ -661,4 +671,50 @@ function stripDecoratorsFromMember(
 
 export function createClassStaticBlock(node: ts.Block) {
   return ts.factory.createClassStaticBlockDeclaration(node);
+}
+
+function generateTemplateStmts(templateStmts: Template[], sourceFile: ts.SourceFile, hoisted: ts.Statement[]) {
+
+  templateStmts.forEach(node => {
+
+    const creationNode = ts.factory.createIfStatement(
+        factory.createBinaryExpression(
+            ts.factory.createIdentifier("rf"),
+            ts.SyntaxKind.AmpersandToken,
+            ts.factory.createIdentifier("1")
+        ),
+        ts.factory.createBlock([...node.stmts], true),
+        undefined
+    );
+
+    const updateNode = factory.createIfStatement(
+        factory.createBinaryExpression(
+            factory.createIdentifier("rf"),
+            ts.SyntaxKind.AmpersandToken,
+            factory.createIdentifier("2")
+        ),
+        factory.createBlock([...node.updateStmts], true),
+        undefined
+    )
+
+    const block = ts.factory.createBlock([creationNode, updateNode], true);
+
+    const functionDecl = ts.factory.createFunctionDeclaration(
+        [],
+        undefined,
+        node.functionName,
+        [],
+        [],
+        undefined,
+        block,
+    )
+
+    hoisted.push(functionDecl)
+
+    if (node.templateStmts) {
+      generateTemplateStmts(node.templateStmts, sourceFile, hoisted)
+    }
+
+  })
+
 }
