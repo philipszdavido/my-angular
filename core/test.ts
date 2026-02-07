@@ -1,4 +1,4 @@
-import { Component } from './framework/core/Component';
+import { Component } from './framework/core/component';
 import { bootstrap, readInComponents, DOMtoHTML, parse, compileExpr } from './framework/platform-browser/bootstrap';
 import * as HTML from 'html-parse-stringify'
 
