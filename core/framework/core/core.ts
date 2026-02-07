@@ -119,7 +119,7 @@ interface LFrame {
   inI18n: boolean;
 }
 
-type Element = HTMLElement | Text;
+type Element = HTMLElement | Text | SVGElement;
 type TemplateFn = (RenderFlags, any) => void;
 export interface Type<T> extends Function {
   new (...args: any[]): T;
@@ -155,11 +155,17 @@ export interface ComponentDefinition<T> {
   id: string;
 }
 
+export enum NameSpace {
+  None,
+  SvgNameSpace
+}
+
 export let runtime = {
   currentLView: null as LView | null,
   currentTNode: null,
   parent: null,
-  selectedIndex: -1
+  selectedIndex: -1,
+  currentNamespace: NameSpace.None,
 };
 
 export function enterView(lView: LView) {

@@ -1,9 +1,10 @@
 import {AttributeMarker} from "./attribute_marker";
-import {CREATE, enterView, leaveView, LView, runtime, TView, UPDATE} from "./core";
+import {CREATE, enterView, leaveView, LView, NameSpace, runtime, TView, UPDATE} from "./core";
 
 const COMPONENT_VARIABLE = '%COMP%';
 const HOST_ATTR = `_nghost-${COMPONENT_VARIABLE}`;
 const CONTENT_ATTR = `_ngcontent-${COMPONENT_VARIABLE}`;
+const SVG_NS = "http://www.w3.org/2000/svg";
 
 export function ɵɵelementStart(index: number, tag: string, attrsIndex?: number | null,) {
     const lView = runtime.currentLView!;
@@ -15,22 +16,34 @@ export function ɵɵelementStart(index: number, tag: string, attrsIndex?: number
     runtime.currentTNode = el;
 
     if (tView.firstCreatePass) {
-        el = document.createElement(tag);
+
+        if (tag.toLowerCase() == "svg") {
+            runtime.currentNamespace = NameSpace.SvgNameSpace
+        }
+
+        if (runtime.currentNamespace == NameSpace.SvgNameSpace) {
+            el = document.createElementNS(SVG_NS, tag);
+        } else {
+            el = document.createElement(tag);
+        }
+
         lView.data[index] = el;
 
         // set styles
         if (attrsIndex !== undefined && attrsIndex >= 0) {
             // get consts
-            const attr = tView.consts[attrsIndex];
-            if (attr[0] == AttributeMarker.Styles) {
-                (el as HTMLElement).setAttribute("style", attr[1]);
-            }
-            if (attr[0] == AttributeMarker.Classes) {
-                (el as HTMLElement).setAttribute("class", attr[1]);
-            }
+            const attrArray = tView.consts[attrsIndex];
+            for (let i = 0; i < attrArray.length; i++) {
 
-            if (typeof attr[0] == 'string') {
-                (el as HTMLElement).setAttribute(attr[0], attr[1]);
+                const attr = attrArray[i];
+
+                if (attr[0] == AttributeMarker.Styles) {
+                    (el as HTMLElement).setAttribute("style", attr[1]);
+                } else if (attr[0] == AttributeMarker.Classes) {
+                    (el as HTMLElement).setAttribute("class", attr[1]);
+                } else {
+                    (el as HTMLElement).setAttribute(attr[0], attr[1]);
+                }
             }
         }
 
@@ -68,6 +81,10 @@ export function ɵɵelementEnd() {
     // } else {
     //     runtime.currentTNode = runtime.currentLView.host;
     // }
+
+    if (runtime.currentTNode.tagName.toUpperCase() === "SVG") {
+        runtime.currentNamespace = NameSpace.None;
+    }
 
     runtime.currentTNode = runtime.currentTNode.parentNode;
 
