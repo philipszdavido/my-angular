@@ -14,6 +14,8 @@ export function transformPlugin(
   return (context): any => {
     const factory = context.factory;
 
+    const hoisted: ts.Statement[] = [];
+
     function visit(node: ts.Node): ts.Node {
       // we need to skip comments
 
@@ -32,7 +34,7 @@ export function transformPlugin(
 
         const factoryNode = createFactoryStatic(node.name?.text, node);
 
-        const cmpDefNode = createDefineComponentStatic(componentName, metadata, node);
+        const cmpDefNode = createDefineComponentStatic(componentName, metadata, node, hoisted);
 
         return updateClassDeclaration(node, [factoryNode, cmpDefNode]);
       }
@@ -41,14 +43,6 @@ export function transformPlugin(
     }
 
     return (sourceFile) => {
-      // const newStatements = sourceFile.statements.map((stmt) => {
-      //   // Remove any attached comments manually
-      //   ts.setSyntheticLeadingComments(stmt, []);
-      //   ts.setSyntheticTrailingComments(stmt, []);
-      //   return stmt;
-      // });
-
-      // sourceFile = factory.updateSourceFile(sourceFile, newStatements);
 
       // check if import from "@mini-ng/core" exists
       let hasMiniNgImport = sourceFile.statements.some(
@@ -60,42 +54,54 @@ export function transformPlugin(
 
       if (hasMiniNgImport) {
         const importStatement = factory.createImportDeclaration(
-          /* modifiers */ undefined,
-          /* importClause */ factory.createImportClause(
-            /* isTypeOnly */ false,
-            /* name */ undefined,
+           undefined,
+           factory.createImportClause(
+             false,
+             undefined,
             factory.createNamespaceImport(factory.createIdentifier("i0")),
           ),
-          /* moduleSpecifier */ factory.createStringLiteral("@mini-ng/core"),
-          /* assertClause */ undefined,
+           factory.createStringLiteral("@mini-ng/core"),
+           undefined,
         );
-
-        let statements = [];
-        let pushedImport = false;
-
-        sourceFile.statements.forEach((stmt) => {
-          if (ts.isImportDeclaration(stmt)) {
-            statements.push(stmt);
-          } else {
-            if (pushedImport === false) {
-              statements.push(importStatement);
-              statements.push(stmt);
-              pushedImport = true;
-            } else {
-              statements.push(stmt);
-            }
-          }
-        });
 
         // Prepend the import at the top
         sourceFile = factory.updateSourceFile(sourceFile, [
-          /*importStatement,
-          ...sourceFile.statements,*/
-          ...statements,
+            ...insertStatementAfterLastImportStmt(sourceFile.statements, [importStatement])
         ]);
       }
 
-      return ts.visitNode(sourceFile, visit);
+      // return ts.visitNode(sourceFile, visit);
+      const visited = ts.visitNode(sourceFile, visit) as ts.SourceFile;
+      return context.factory.updateSourceFile(
+          visited,
+          insertStatementAfterLastImportStmt(visited.statements, hoisted)
+      );
     };
   };
+}
+
+function insertStatementAfterLastImportStmt(statements, hoisted) {
+  const lastImportIndex = findLastImportIndex(statements);
+
+  const updatedStatements = [
+    ...statements.slice(0, lastImportIndex + 1),
+          ...hoisted,
+    ...statements.slice(lastImportIndex + 1),
+  ];
+
+  return updatedStatements
+}
+
+function findLastImportIndex(statements: readonly ts.Statement[]): number {
+  let lastImport = -1;
+
+  for (let i = 0; i < statements.length; i++) {
+    if (ts.isImportDeclaration(statements[i])) {
+      lastImport = i;
+    } else {
+      break; // imports are always at the top
+    }
+  }
+
+  return lastImport;
 }
