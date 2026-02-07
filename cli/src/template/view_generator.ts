@@ -17,6 +17,7 @@ import {
   ɵɵtext,
   ɵɵtextInterpolate
 } from "../constants/constants";
+import {CSSParser} from "../css_parser/css_parser";
 
 export interface ViewGeneratorOptions {
   // Add any configuration options here
@@ -71,7 +72,6 @@ export class ViewGenerator {
   ): { creation: string; update: string } {
     if (node instanceof Element) {
       const tag = node.tagName;
-      
       if(templatesNodeNames.includes(tag)) {
         return this.processTemplateElement(node, index)
       }
@@ -115,21 +115,33 @@ export class ViewGenerator {
 
         this.updateStmts.push(generateAdvanceNode(index.toString()));
         this.updateStmts.push(generatePropertyNode(propertyName, attributes[attr]));
-        console.log(attr, attributes[attr], attributes)
 
         update += `i0.ɵɵproperty("${propertyName}", ctx.${attributes[attr]});\n`;
       } else {
         attrArray.push(`"${attr}", "${attributes[attr]}"`);
 
         let attr_marker : AttributeMarker;
-        if (attr == "style") {
-          attr_marker = AttributeMarker.Styles;
+
+        switch (attr) {
+          case 'style': {
+            attr_marker = AttributeMarker.Styles;
+            break;
+          }
+
+          case 'class': {
+            attr_marker = AttributeMarker.Classes;
+            break;
+          }
+
+          default: {
+            break;
+          }
         }
 
         this.consts.push(
             ts.factory.createArrayLiteralExpression(
             [
-                ts.factory.createNumericLiteral(attr_marker),
+                !attr_marker ? ts.factory.createStringLiteral(attr) : ts.factory.createNumericLiteral(attr_marker),
               ts.factory.createStringLiteral(attributes[attr])
             ]
             )
@@ -148,6 +160,12 @@ export class ViewGenerator {
     // Process children
     let childIndex = index + 1;
     element.childNodes.forEach((childNode, idx) => {
+
+      if (tag === "style") {
+        const cssParser = new CSSParser();
+        (childNode as Text).data = cssParser.parsePostCSS((childNode as Text).data.trim())
+      }
+
       const { creation: childCreation, update: childUpdate } = this.processNode(
         childNode,
         childIndex + idx
@@ -237,8 +255,6 @@ function generateElementStartNode(
     ts.factory.createNumericLiteral(index),
     ts.factory.createStringLiteral(element),
   ];
-
-  console.log(index, element, attrsIndex)
 
   if (attrsIndex !== undefined && attrsIndex >= 0) {
     params.push(ts.factory.createNumericLiteral(attrsIndex));

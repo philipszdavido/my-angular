@@ -52,9 +52,10 @@ export class CSSParser {
         const root = postcss.parse(cssText);
 
         root.walkRules(rule => {
-            rule.selectors = rule.selectors.map(
-                s => `${s}[_ngcontent-%COMP%]`
-            );
+            // rule.selectors = rule.selectors.map(
+            //     s => `${s}[_ngcontent-%COMP%]`
+            // );
+            rule.selectors = rule.selectors.map(this.scopeSelectorV1);
         });
 
         const result = root.toString();
@@ -63,4 +64,59 @@ export class CSSParser {
 
     }
 
+     scopeSelector(selector: string) {
+        return selector
+            .split(/\s+/)
+            .map(part => {
+                if (part.includes(':host')) {
+                    return part.replace(
+                        /:host(\((.*?)\))?/g,
+                        (_, __, hostSel) =>
+                            hostSel
+                                ? `[_nghost-%COMP%]${hostSel}`
+                                : `[_nghost-%COMP%]`
+                    );
+                }
+
+                // Ignore pseudo selectors like :hover
+                if (part.startsWith(':')) return part;
+
+                return `${part}[_ngcontent-%COMP%]`;
+            })
+            .join(' ');
+    }
+
+    scopeSelectorV1(selector: string) {
+        return selector
+            .split(/\s+/)
+            .map(part => {
+                if (part.includes(':host')) {
+                    return part.replace(
+                        /:host(\((.*?)\))?/g,
+                        (_, __, hostSel) =>
+                            hostSel
+                                ? `[_nghost-%COMP%]${hostSel}`
+                                : `[_nghost-%COMP%]`
+                    );
+                }
+
+                // combinators or pseudo-only selectors
+                if (part.startsWith(':')) return part;
+
+                return scopeSimpleSelector(part);
+            })
+            .join(' ');
+    }
+
+}
+
+function scopeSimpleSelector(sel: string) {
+    // split before pseudo
+    const match = sel.match(/^([^:]+)(.*)$/);
+
+    if (!match) return sel;
+
+    const [, base, pseudo] = match;
+
+    return `${base}[_ngcontent-%COMP%]${pseudo}`;
 }

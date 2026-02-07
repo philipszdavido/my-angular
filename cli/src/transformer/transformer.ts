@@ -1,13 +1,17 @@
 import * as ts from "typescript";
+import * as fs from "fs"
+import { readFileSync } from 'node:fs';
 import { Parser } from "../template/parser";
 import {CSSParser} from "../css_parser/css_parser";
 import {i0, ɵcmp, ɵfac, ɵɵdefineComponent} from "../constants/constants";
+import * as path from "node:path";
 
 type ComponentMetadata = {
   selector: ts.PropertyAssignment;
   standalone: ts.ObjectLiteralElementLike;
   template: ts.PropertyAssignment;
-  templateUrl: ts.ObjectLiteralElementLike;
+  templateUrl: ts.PropertyAssignment;
+  styleUrl: ts.PropertyAssignment;
   styleUrls: ts.ObjectLiteralElementLike;
   styles: ts.PropertyAssignment;
   providers: ts.ObjectLiteralElementLike;
@@ -59,8 +63,9 @@ export function extractComponentMetadata(
   ) as ts.PropertyAssignment;
 
   // templateUrl
-  const templateUrl = getMetadataProperty(metadata.properties, "templateUrl");
+  const templateUrl = getMetadataProperty(metadata.properties, "templateUrl") as ts.PropertyAssignment;
   const styleUrls = getMetadataProperty(metadata.properties, "styleUrls");
+  const styleUrl = getMetadataProperty(metadata.properties, "styleUrl") as ts.PropertyAssignment;
   const providers = getMetadataProperty(metadata.properties, "providers");
   const animations = getMetadataProperty(metadata.properties, "animations");
   const encapsulation = getMetadataProperty(
@@ -90,6 +95,7 @@ export function extractComponentMetadata(
     template,
     templateUrl,
     styleUrls,
+    styleUrl,
     styles,
     providers,
     animations,
@@ -271,6 +277,9 @@ function createCmpDefinitionPropertiesNode(
   metadata: ComponentMetadata,
   node: ts.Node
 ): ts.ObjectLiteralElementLike[] {
+  const sourceFile = node.getSourceFile();
+  const tsFilePath = sourceFile.fileName;
+
   const properties = [];
 
   // type
@@ -327,58 +336,79 @@ function createCmpDefinitionPropertiesNode(
     ));
   }
 
+  // templateUrl
+  if (metadata.templateUrl) {
+
+    const templateUrlPath = (metadata.templateUrl.initializer as ts.StringLiteral).text;
+
+    // read templateUrlPath
+    const templateString = readTemplate(tsFilePath, templateUrlPath);
+
+    const { templateNode, constsNode} = generateTemplateInstructions(componentName, templateString);
+    properties.push(templateNode);
+    properties.push(constsNode);
+
+  }
+
   // template
   const template = metadata.template;
 
   if (template) {
-    const context = "ctx";
-    const renderFlag = "rf";
-    const functionName = componentName + "_Template";
 
     const templateString = (template.initializer as ts.StringLiteral).text;
 
-    const parser = new Parser(templateString);
-    const {block, consts} = parser.parse();
+    const { templateNode, constsNode} = generateTemplateInstructions(componentName, templateString);
+    properties.push(templateNode);
+    properties.push(constsNode);
 
-    properties.push(
-      ts.factory.createPropertyAssignment(
-        "template",
-        ts.factory.createFunctionExpression(
-          undefined,
-          undefined,
-          functionName,
-          undefined,
-          [
-            ts.factory.createParameterDeclaration(
-              undefined,
-              undefined,
-              renderFlag,
-              undefined,
-              undefined,
-              undefined
-            ),
-            ts.factory.createParameterDeclaration(
-              undefined,
-              undefined,
-              context,
-              undefined,
-              undefined,
-              undefined
-            ),
-          ],
-          undefined,
-          block
-        )
-      )
-    );
+    // const context = "ctx";
+    // const renderFlag = "rf";
+    // const functionName = componentName + "_Template";
+
+    // const templateString = (template.initializer as ts.StringLiteral).text;
+
+    // const parser = new Parser(templateString);
+    // const { block, consts} = parser.parse();
+
+    // properties.push(
+    //   ts.factory.createPropertyAssignment(
+    //     "template",
+    //     ts.factory.createFunctionExpression(
+    //       undefined,
+    //       undefined,
+    //       functionName,
+    //       undefined,
+    //       [
+    //         ts.factory.createParameterDeclaration(
+    //           undefined,
+    //           undefined,
+    //           renderFlag,
+    //           undefined,
+    //           undefined,
+    //           undefined
+    //         ),
+    //         ts.factory.createParameterDeclaration(
+    //           undefined,
+    //           undefined,
+    //           context,
+    //           undefined,
+    //           undefined,
+    //           undefined
+    //         ),
+    //       ],
+    //       undefined,
+    //       block
+    //     )
+    //   )
+    // );
 
     // consts
-    properties.push(ts.factory.createPropertyAssignment(
-        ts.factory.createIdentifier("consts"),
-        ts.factory.createArrayLiteralExpression(
-            consts
-        )
-    ));
+    // properties.push(ts.factory.createPropertyAssignment(
+    //     ts.factory.createIdentifier("consts"),
+    //     ts.factory.createArrayLiteralExpression(
+    //         consts
+    //     )
+    // ));
 
   }
 
@@ -398,6 +428,48 @@ function createCmpDefinitionPropertiesNode(
             [ts.factory.createStringLiteral(result)]
         )
     ))
+  }
+
+  if (metadata.styleUrl) {
+
+    const cssParser = new CSSParser();
+
+    const styleUrlPath = (metadata.styleUrl.initializer as ts.StringLiteral).text;
+
+    const styleString = readTemplate(tsFilePath, styleUrlPath);
+    const result = cssParser.parsePostCSS(styleString);
+
+    properties.push(ts.factory.createPropertyAssignment(
+        ts.factory.createIdentifier("styles"),
+        ts.factory.createArrayLiteralExpression(
+            [ts.factory.createStringLiteral(result)]
+        )
+    ));
+
+  }
+
+  if (metadata.styleUrls) {
+
+    const cssParser = new CSSParser();
+
+    const styleUrls = ((metadata.styleUrls as ts.PropertyAssignment).initializer as ts.ArrayLiteralExpression).elements.map(style => {
+
+      const cssPath = (style as ts.StringLiteral).text;
+
+      const cssText = readTemplate(tsFilePath, cssPath);
+
+      const result = cssParser.parsePostCSS(cssText);
+
+      return ts.factory.createStringLiteral(result);
+    });
+
+    properties.push(ts.factory.createPropertyAssignment(
+        ts.factory.createIdentifier("styles"),
+        ts.factory.createArrayLiteralExpression(
+            styleUrls
+        )
+    ));
+
   }
 
   if (ts.isClassDeclaration(node)) {
@@ -427,6 +499,67 @@ function createCmpDefinitionPropertiesNode(
   }
 
   return properties;
+}
+
+function readTemplate(tsFilePath: string, templateUrl: string) {
+  const dir = path.dirname(tsFilePath);
+  const fullPath = path.resolve(dir, templateUrl);
+  return fs.readFileSync(fullPath, 'utf-8');
+}
+
+function generateTemplateInstructions(componentName: string, templateString: string) {
+
+    const context = "ctx";
+    const renderFlag = "rf";
+    const functionName = componentName + "_Template";
+
+    const parser = new Parser(templateString);
+    const { block, consts} = parser.parse();
+
+    const template = ts.factory.createPropertyAssignment(
+            "template",
+            ts.factory.createFunctionExpression(
+                undefined,
+                undefined,
+                functionName,
+                undefined,
+                [
+                  ts.factory.createParameterDeclaration(
+                      undefined,
+                      undefined,
+                      renderFlag,
+                      undefined,
+                      undefined,
+                      undefined
+                  ),
+                  ts.factory.createParameterDeclaration(
+                      undefined,
+                      undefined,
+                      context,
+                      undefined,
+                      undefined,
+                      undefined
+                  ),
+                ],
+                undefined,
+                block
+            )
+        )
+
+
+    // consts
+    const constsExpr = ts.factory.createPropertyAssignment(
+        ts.factory.createIdentifier("consts"),
+        ts.factory.createArrayLiteralExpression(
+            consts
+        )
+    );
+
+    return  {
+      templateNode: template,
+      constsNode: constsExpr
+    }
+
 }
 
 function extractInputsOutputs(node: ts.ClassDeclaration) {
