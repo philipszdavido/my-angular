@@ -2,7 +2,7 @@ import {enterView, leaveView, LView, runtime, UPDATE} from "./core";
 import {getComponent} from "./element";
 
 function listenerCallback(lView: LView, fn: any) {
-    return (evt: Event ) => {
+    return (evt: Event | any ) => {
         enterView(lView)
         fn(evt);
         lView.tView.template(UPDATE, lView.context);
@@ -11,12 +11,7 @@ function listenerCallback(lView: LView, fn: any) {
 }
 
 function listenerOutputCallback(lView: LView, fn: any) {
-    return (evt: any ) => {
-        enterView(lView)
-        fn(evt);
-        lView.tView.template(UPDATE, lView.context);
-        leaveView();
-    }
+    return listenerCallback(lView, fn);
 }
 
 // ɵɵlistener("click", () => ctx.handleEvent('click'))

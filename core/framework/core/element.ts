@@ -10,6 +10,8 @@ export function ɵɵelementStart(index: number, tag: string, attrsIndex?: number
     const tView = lView.tView;
 
     let el = lView.data[index];
+    const parentNode = runtime.currentTNode;
+
     runtime.currentTNode = el;
 
     if (tView.firstCreatePass) {
@@ -23,11 +25,16 @@ export function ɵɵelementStart(index: number, tag: string, attrsIndex?: number
             if (attr[0] == AttributeMarker.Styles) {
                 (el as HTMLElement).setAttribute("style", attr[1]);
             }
+            if (attr[0] == AttributeMarker.Classes) {
+                (el as HTMLElement).setAttribute("class", attr[1]);
+            }
+
+            if (typeof attr[0] == 'string') {
+                (el as HTMLElement).setAttribute(attr[0], attr[1]);
+            }
         }
 
         const id = lView.tView?.id;
-        const id_value = "_ngcontent-" + id;
-        (el as HTMLElement).setAttribute(id_value, id_value);
 
         runtime.currentTNode = el;
         runtime.selectedIndex = index;
@@ -41,11 +48,14 @@ export function ɵɵelementStart(index: number, tag: string, attrsIndex?: number
 
         if (isComponent) {
             renderComponent(componentType, tView, el, lView, index);
+        } else {
+            const id_value = "_ngcontent-" + id;
+            (el as HTMLElement).setAttribute(id_value, id_value);
         }
 
     }
 
-    const parent = lView.host;
+    const parent = parentNode //lView.host;
 
     parent.appendChild(el);
 
@@ -53,11 +63,14 @@ export function ɵɵelementStart(index: number, tag: string, attrsIndex?: number
 
 export function ɵɵelementEnd() {
 
-    if (runtime.currentLView.parent) {
-        runtime.currentTNode = runtime.currentLView.parent.host;
-    } else {
-        runtime.currentTNode = runtime.currentLView.host;
-    }
+    // if (runtime.currentLView.parent) {
+    //     runtime.currentTNode = runtime.currentLView.parent.host;
+    // } else {
+    //     runtime.currentTNode = runtime.currentLView.host;
+    // }
+
+    runtime.currentTNode = runtime.currentTNode.parentNode;
+
     runtime.selectedIndex = -1;
 
 }
@@ -68,6 +81,9 @@ function renderComponent(component: any, tView: TView, el: any, parent: LView, i
     const componentInstance = component.ɵfac();
 
     const templateFn = componentDef.template;
+
+    const id_value = "_nghost-" + componentDef.tView.id;
+    (el as HTMLElement).setAttribute(id_value, id_value);
 
     if (templateFn !== null) {
 
