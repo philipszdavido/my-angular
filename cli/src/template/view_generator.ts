@@ -29,6 +29,13 @@ type InterpolationType = {
 }
 
 const templatesNodeNames = ["ng-if", "ng-for", "ng-else", "ng-else-if", "ng-empty", "ng-case", "ng-switch", "ng-default"]
+const SVG_TAG_REWRITE: Record<string, string> = {
+  clippath: 'clipPath',
+  lineargradient: 'linearGradient',
+  radialgradient: 'radialGradient',
+  foreignobject: 'foreignObject',
+};
+
 
 export class ViewGenerator {
   private options: ViewGeneratorOptions;
@@ -36,6 +43,7 @@ export class ViewGenerator {
   private readonly stmts: ts.ExpressionStatement[] = [];
   private readonly updateStmts: ts.ExpressionStatement[] = [];
   private readonly consts: ts.Expression[] = [];
+  private slot = 0;
 
   constructor(options: ViewGeneratorOptions = {}) {
     this.options = options;
@@ -68,8 +76,11 @@ export class ViewGenerator {
 
   private processNode(
     node: Node,
-    index: number
+    _: number
   ): { creation: string; update: string } {
+
+    let index = this.slot++;
+
     if (node instanceof Element) {
       const tag = node.tagName;
       if(templatesNodeNames.includes(tag)) {
@@ -84,11 +95,15 @@ export class ViewGenerator {
     }
   }
 
+  rewriteTagExactDomName(tag: string) {
+    return SVG_TAG_REWRITE[tag] ?? tag;
+  }
+
   private processElement(
     element: Element,
     index: number
   ): { creation: string; update: string, attrArray: string[] } {
-    const tag = element.tagName;
+    const tag =  this.rewriteTagExactDomName(element.tagName);
     const attributes = element.attribs;
     let creation = `i0.ɵɵelementStart(${index}, "${tag}"`;
     let update = "";
@@ -96,6 +111,7 @@ export class ViewGenerator {
     let attrIndex;
 
     const tempStmts = [];
+    const tempConstsStmts = []
 
     // Process attributes
     for (const attr in attributes) {
@@ -138,7 +154,7 @@ export class ViewGenerator {
           }
         }
 
-        this.consts.push(
+        tempConstsStmts.push(
             ts.factory.createArrayLiteralExpression(
             [
                 !attr_marker ? ts.factory.createStringLiteral(attr) : ts.factory.createNumericLiteral(attr_marker),
@@ -146,9 +162,16 @@ export class ViewGenerator {
             ]
             )
         )
-        attrIndex = this.consts.length - 1;
+        attrIndex = this.consts.length;
       }
     }
+
+    // here, push consts
+    this.consts.push(
+        ts.factory.createArrayLiteralExpression(
+        tempConstsStmts
+        )
+    )
 
     if (attrArray.length > 0) {
       creation += `, ${attrArray.join(", ")}`;
@@ -219,10 +242,10 @@ export class ViewGenerator {
     while ((match = regex.exec(input)) !== null) {
       if (match[1] !== undefined) {
         // This is an expression match
-        result.push({ type: 'expression', content: match[1].trim() });
+        result.push({ type: 'expression', content: match[1] });
       } else if (match[2] !== undefined) {
         // This is a text match
-        result.push({ type: 'text', content: match[2].trim() });
+        result.push({ type: 'text', content: match[2] });
       }
     }
 
