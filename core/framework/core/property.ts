@@ -1,4 +1,4 @@
-import {enterView, leaveView, runtime, UPDATE} from "./core";
+import {enterView, leaveView, runtime, TNode, UPDATE} from "./core";
 import {getComponent} from "./element";
 
 // i0.ɵɵproperty("bind", ctx.name);
@@ -8,10 +8,11 @@ export function ɵɵproperty<T>(
 ) {
     const lView = runtime.currentLView!;
     const tView = lView.tView;
-    const node = runtime.currentTNode;
-    node[propName] = value as string;
+    const tNode = tView.data[runtime.selectedIndex] as TNode
 
-    const componentType = getComponent(tView, node.nodeName.toLowerCase());
+    lView.data[tNode.index][propName] = value;
+
+    const componentType = getComponent(tView, tNode.value.toLowerCase());
 
     const isComponent = componentType || false;
 

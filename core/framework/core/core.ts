@@ -119,13 +119,44 @@ interface LFrame {
   inI18n: boolean;
 }
 
-type Element = HTMLElement | Text | SVGElement;
+type Element = HTMLElement | Text | SVGElement | Comment;
 type TemplateFn = (RenderFlags, any) => void;
 export interface Type<T> extends Function {
   new (...args: any[]): T;
 }
 
+export const enum TNodeType {
+  Text = 0b1,
+
+  Element = 0b10,
+
+  Container = 0b100,
+
+  ElementContainer = 0b1000,
+
+  Projection = 0b10000,
+
+  Icu = 0b100000,
+
+  Placeholder = 0b1000000,
+
+  LetDeclaration = 0b10000000,
+
+  ControlDirective = 0b100000000,
+  AnyRNode = 0b11, // Text | Element
+  AnyContainer = 0b1100, // Container | ElementContainer
+}
+
+export type TData = (number | TNode )[]
+
+export enum TViewType {
+  Root,
+  Component,
+  Embedded
+}
+
 export type TView = {
+  type: TViewType;
   blueprint: any[];
   firstCreatePass: boolean;
   template: TemplateFn;
@@ -135,6 +166,7 @@ export type TView = {
   inputs: { string: string };
   outputs: { string: string };
   id: string;
+  data: TData;
 };
 
 export type LView = {
@@ -144,6 +176,19 @@ export type LView = {
   parent: LView | null; // parent of this LView
   host: Element; // HTMLElement or Text node of this LView
   context: any; // class instance of this LView
+};
+
+export type TNode = {
+  type: TNodeType;
+  index: number;
+  value: any;
+  tView: TView | null;
+  parent: TNode | null;
+};
+
+export type LContainer = {
+  tView: TView;
+  host: Element;
 };
 
 export interface ComponentDefinition<T> {
@@ -160,21 +205,35 @@ export enum NameSpace {
   SvgNameSpace
 }
 
-export let runtime = {
+export type LRuntime = {
+  currentLView: LView;
+  currentTNode: TNode;
+  parent: LRuntime | null;
+  selectedIndex: number;
+  currentNamespace: NameSpace;
+  isParent: boolean;
+};
+
+export let runtime: LRuntime = {
   currentLView: null as LView | null,
   currentTNode: null,
   parent: null,
   selectedIndex: -1,
   currentNamespace: NameSpace.None,
+  isParent: true,
 };
 
 export function enterView(lView: LView) {
-  const newRuntime = {};
-  newRuntime['currentLView'] = lView;
 
-  newRuntime['currentTNode'] = lView.host;
-  newRuntime['parent'] = runtime;
-  // @ts-ignore
+  const newRuntime = {
+    currentLView: lView,
+    currentTNode: null,
+    parent: runtime,
+    selectedIndex: -1,
+    currentNamespace: NameSpace.None,
+    isParent: true,
+  };
+
   runtime = newRuntime;
 }
 
@@ -185,18 +244,16 @@ export function leaveView() {
 }
 
 export function getTNode(tView: TView, index: number) {
-  // const tNode = tView.data[index]
-  // return tNode;
+  const tNode = tView.data[index]
+  return tNode;
 }
 
 export function getSelectedTNode() {
   const lFrame = runtime;
-  // return getTNode(lFrame.tView, lFrame.selectedIndex);
+  return getTNode(lFrame.currentLView.tView, lFrame.selectedIndex);
 }
 
 export function ɵɵadvance(delta: number = 1) {
-  const lView = runtime.currentLView!;
-  runtime.currentTNode = lView.data[delta];
   runtime.selectedIndex = delta;
 }
 
@@ -214,6 +271,8 @@ export function ɵɵdefineComponent<T>(def: any): ComponentDefinition<T> {
     inputs: def.inputs,
     outputs: def.outputs,
     id: compId,
+    type: TViewType.Root,
+    data: []
   };
 
   def.tView = tView;

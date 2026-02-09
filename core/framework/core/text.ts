@@ -1,4 +1,6 @@
 import {runtime} from "./core";
+import {appendChild} from "./element";
+import {getCurrentParentTNode} from "./state";
 
 export function ɵɵtext(index: number, value = '') {
     const lView = runtime.currentLView!;
@@ -11,9 +13,9 @@ export function ɵɵtext(index: number, value = '') {
         lView.data[index] = text;
     }
 
-    const parent = runtime.currentTNode;
+    const parent = getCurrentParentTNode()
 
-    parent.appendChild(text);
+    appendChild(text, lView, tView, parent);
 
 }
 

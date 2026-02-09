@@ -1,4 +1,4 @@
-import {enterView, leaveView, LView, runtime, UPDATE} from "./core";
+import {enterView, leaveView, LView, runtime, TNode, TView, UPDATE} from "./core";
 import {getComponent} from "./element";
 
 function listenerCallback(lView: LView, fn: any) {
@@ -17,32 +17,36 @@ function listenerOutputCallback(lView: LView, fn: any) {
 // ɵɵlistener("click", () => ctx.handleEvent('click'))
 export function ɵɵlistener(listener: string, fn: () => void) {
 
-    const parent = runtime.currentTNode;
+    const tNode = runtime.currentTNode;
 
     const lView = runtime.currentLView!;
     const tView = lView.tView;
 
-    const componentType = getComponent(tView, runtime.currentTNode.nodeName.toLowerCase());
+    const componentType = getComponent(tView, tNode.value.toLowerCase());
 
     const isComponent = componentType || false;
 
     if (isComponent) {
 
-        const childLView = lView.instances[runtime.selectedIndex];
+        const childLView = lView.instances[tNode.index];
 
         for( let output in childLView.tView.outputs) {
 
             if (output == listener) {
-                // childLView.context[listener].addEventListener(/*listener, */fn);
-                childLView.context[listener].addEventListener(listenerOutputCallback(runtime.currentLView, fn));
+                childLView.context[listener].addEventListener(listenerOutputCallback(lView, fn));
             }
 
         }
 
     } else {
 
-        parent.addEventListener(listener, listenerCallback(runtime.currentLView, fn));
+        appendListener(listener, runtime.currentTNode, lView, tView, listenerCallback(lView, fn))
 
     }
 
+}
+
+function appendListener(listener: string, tNode: TNode, lView: LView, tView: TView, fn: any) {
+    const parent = lView.data[tNode.index];
+    parent.addEventListener(listener, fn);
 }

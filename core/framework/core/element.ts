@@ -1,5 +1,6 @@
 import {AttributeMarker} from "./attribute_marker";
-import {CREATE, enterView, leaveView, LView, NameSpace, runtime, TView, UPDATE} from "./core";
+import {CREATE, enterView, leaveView, LView, NameSpace, runtime, TNode, TNodeType, TView, UPDATE} from "./core";
+import {getCurrentParentTNode, setCurrentTNode} from "./state";
 
 const COMPONENT_VARIABLE = '%COMP%';
 const HOST_ATTR = `_nghost-${COMPONENT_VARIABLE}`;
@@ -11,9 +12,19 @@ export function ɵɵelementStart(index: number, tag: string, attrsIndex?: number
     const tView = lView.tView;
 
     let el = lView.data[index];
-    const parentNode = runtime.currentTNode;
 
-    runtime.currentTNode = el;
+    // get or create tNode
+    let tNode: TNode
+
+    if (tView.data[index]) {
+        tNode = tView.data[index] as TNode;
+    } else {
+        const parentNode = getCurrentParentTNode();
+        tNode = createTNode(index, tag, tView, parentNode);
+        tView.data[index] = tNode;
+    }
+
+    setCurrentTNode(tNode, true)
 
     if (tView.firstCreatePass) {
 
@@ -49,9 +60,6 @@ export function ɵɵelementStart(index: number, tag: string, attrsIndex?: number
 
         const id = lView.tView?.id;
 
-        runtime.currentTNode = el;
-        runtime.selectedIndex = index;
-
         // check the tag is a component
         // search in tview directive registry
 
@@ -68,10 +76,27 @@ export function ɵɵelementStart(index: number, tag: string, attrsIndex?: number
 
     }
 
-    const parent = parentNode //lView.host;
+    appendChild(el, lView, tView, runtime.currentTNode.parent)
 
-    parent.appendChild(el);
+}
 
+export function appendChild(native: Element | any, lView: LView, tView: TView, tNode: TNode) {
+    if (tNode == null) {
+        return lView.host.appendChild(native);
+    }
+
+    return lView.data[tNode.index].appendChild(native);
+
+}
+
+export function createTNode(index: number, tag: string, tView: TView, parentNode: TNode) {
+   return {
+        type: TNodeType.Element,
+            index: index,
+        value: tag,
+        tView: tView,
+        parent: parentNode
+    }
 }
 
 export function ɵɵelementEnd() {
@@ -82,13 +107,13 @@ export function ɵɵelementEnd() {
     //     runtime.currentTNode = runtime.currentLView.host;
     // }
 
-    if (runtime.currentTNode.tagName.toUpperCase() === "SVG") {
+    const tagName = runtime.currentTNode.value;
+
+    if (tagName.toUpperCase() === "SVG") {
         runtime.currentNamespace = NameSpace.None;
     }
 
-    runtime.currentTNode = runtime.currentTNode.parentNode;
-
-    runtime.selectedIndex = -1;
+    runtime.currentTNode = runtime.currentTNode.parent;
 
 }
 
