@@ -28,7 +28,7 @@ type InterpolationType = {
   content: string
 }
 
-const templatesNodeNames = ["ng-if", "ng-for", "ng-else", "ng-else-if", "ng-empty", "ng-case", "ng-switch", "ng-default"]
+const templatesNodeNames = ["ng-if", "ng-for", /*"ng-else", "ng-else-if",*/ /* "ng-empty", "ng-case", */ "ng-switch" /*, "ng-default"*/, "ng-while"]
 const SVG_TAG_REWRITE: Record<string, string> = {
   clippath: 'clipPath',
   lineargradient: 'linearGradient',
@@ -67,11 +67,12 @@ export class ViewGenerator {
     let creationCode = "";
     let updateCode = "";
 
-    nodes.forEach((node, index) => {
+    for (let index = 0; index < nodes.length; index++) {
+      const node = nodes[index];
       const { creation, update } = this.processNode(node, index);
       creationCode += creation;
       updateCode += update;
-    });
+    }
 
     return {
       stmts: this.stmts,
@@ -92,7 +93,7 @@ export class ViewGenerator {
     if (node instanceof Element) {
       const tag = node.tagName;
       if(templatesNodeNames.includes(tag)) {
-        return /*{ creation: "", update: "" };*/ this.processTemplateElement(tag, node, index)
+        return this.processTemplateElement(tag, node, index)
       }
 
       return this.processElement(node, index);
@@ -275,15 +276,26 @@ export class ViewGenerator {
   private processTemplateElement(tag: string, node: Element, index: number) {
 
     if (tag === "ng-if") {
-      this.processNgIf(node, index);
+      return this.processNgIf(node, index);
     }
+
+    if (tag === "ng-for") {}
+
+    if (tag === "ng-switch") {}
+
+    if (tag === "ng-while") {}
 
     return {creation: "", update: ""};
 
   }
 
   processNgIf(node: Element, index: number) {
-    const functionName = "Template_" + index + "tag" + Date.now();
+    const functionName = "Template_" + index + "_tag_Conditional";
+    const conditions = []
+
+    const childNodes = [];
+    const elseIfNodes = [];
+    let elseNode;
 
     // if tag == ng-if
     // create a function outside of this class
@@ -291,39 +303,88 @@ export class ViewGenerator {
     for(const attr in node.attribs) {
       if (attr == "condition") {
         cond_expr = node.attribs[attr];
+        conditions.push({
+          slotIndex: index,
+          type: "if",
+          attributeValue: cond_expr
+        })
         break;
       }
     }
 
-    const exprParser = new ExpressionParser();
-    const exprSourceFile = exprParser.parse(cond_expr);
+    node.childNodes.forEach((childNode, _) => {
+      if (childNode instanceof Element) {
+        if ((childNode as Element).tagName === "ng-elseif") {
 
-    const templateNode = ts.factory.createExpressionStatement(
-        ts.factory.createCallExpression(
-            ts.factory.createPropertyAccessExpression(
-                ts.factory.createIdentifier(i0),
-                ts.factory.createIdentifier("ɵɵtemplate")
-            ),
-            undefined,
-            // @ts-ignore
-            [exprSourceFile.statements[0].expression]
-        )
-    );
+          elseIfNodes.push(childNode);
+        } else if (childNode.tagName === "ng-else") {
+          elseNode = childNode;
+        } else {
+          childNodes.push(childNode);
+        }
+      } else  {
+        childNodes.push(childNode);
+      }
+    })
 
-    const updateTemplateNode = ts.factory.createExpressionStatement(
-        ts.factory.createCallExpression(
-            ts.factory.createPropertyAccessExpression(
-                ts.factory.createIdentifier(i0),
-                ts.factory.createIdentifier("ɵɵconditional")
-            ),
-            undefined,
-            // @ts-ignore
-            [exprSourceFile.statements[0].expression]
-        )
-    );
+    const templateNode = generateTemplateNode(index, functionName, "ng-if");
 
     const viewGenerator = new ViewGenerator();
-    viewGenerator.processChildNodes(node);
+    viewGenerator.processChildren(childNodes);
+
+    this.stmts.push(templateNode)
+
+    // process else-ifs
+    elseIfNodes.forEach(elseIfNode => {
+
+      const slotIndex = this.slot++
+      const elseIfName = "Template_" + slotIndex + "_tag_Conditional";
+      this.stmts.push(generateTemplateNode(slotIndex, elseIfName, "ng-elseif"))
+
+      const viewGenerator = new ViewGenerator();
+      viewGenerator.processChildNodes(elseIfNode);
+
+      for(const attr in elseIfNode.attribs) {
+        if (attr == "condition") {
+          conditions.push({
+            slotIndex,
+            type: "elseif",
+            attributeValue: elseIfNode.attribs[attr],
+          })
+          break;
+        }
+      }
+
+      this.templateStmts.push({
+        functionName: elseIfName,
+        updateStmts: [...viewGenerator.updateStmts],
+        stmts: [...viewGenerator.stmts],
+        templateStmts: viewGenerator.templateStmts
+      });
+
+    })
+
+    // process else node
+    if (elseNode) {
+      const slotIndex = this.slot++
+      const elseFunctionName = "Template_" + slotIndex + "_tag_Conditional"
+      this.stmts.push(generateTemplateNode(slotIndex, elseFunctionName, "ng-else"))
+      conditions.push({
+        slotIndex,
+        type: "else",
+        attributeValue: undefined,
+      })
+
+      const viewGenerator = new ViewGenerator();
+      viewGenerator.processChildNodes(elseNode);
+      this.templateStmts.push({
+        functionName: elseFunctionName,
+        updateStmts: [...viewGenerator.updateStmts],
+        stmts: [...viewGenerator.stmts],
+        templateStmts: viewGenerator.templateStmts
+      });
+
+    }
 
     this.templateStmts.push({
       functionName: functionName,
@@ -332,13 +393,24 @@ export class ViewGenerator {
       templateStmts: [...viewGenerator.templateStmts]
     });
 
-    this.stmts.push(templateNode)
+    this.updateStmts.push(generateAdvanceNode(index.toString()))
+
+    const updateTemplateNode = generateConditionalNode(conditions, 0)
+
     this.updateStmts.push(updateTemplateNode)
+
+    return {creation: "", update: ""};
 
   }
 
   processChildNodes(node: Element) {
     node.childNodes.forEach((childNode, index) => {
+      this.processNode(childNode, index)
+    })
+  }
+
+  processChildren(nodes: Node[]) {
+    nodes.forEach((childNode, index) => {
       this.processNode(childNode, index)
     })
   }
@@ -501,4 +573,161 @@ function generateTextInterpolateNode(bindingExpressions: InterpolationType[]) {
         ]
     ))
     return expressionStatement
+}
+
+function generateTemplateNode(index: number, functionName: string, templateName: string) {
+  return ts.factory.createExpressionStatement(
+      ts.factory.createCallExpression(
+          ts.factory.createPropertyAccessExpression(
+              ts.factory.createIdentifier(i0),
+              ts.factory.createIdentifier("ɵɵtemplate")
+          ),
+          undefined,
+          [
+            ts.factory.createNumericLiteral(index),
+            ts.factory.createIdentifier(functionName),
+            ts.factory.createStringLiteral(templateName)
+          ]
+      )
+  )
+}
+
+function generateConditionalNode(conditionals: any[], containerIndex: number) {
+
+  const exprParser = new ExpressionParser();
+
+  let expr: ts.Expression
+
+  if (conditionals.length == 1) {
+
+    const condition = conditionals[0];
+
+    const conditionExpr =
+        // @ts-ignore
+        exprParser.parse(condition.attributeValue).statements[0].expression;
+
+    expr = ts.factory.createConditionalExpression(
+        conditionExpr,
+        ts.factory.createToken(ts.SyntaxKind.QuestionToken),
+        // @ts-ignore
+        exprParser.parse(condition.slotIndex.toString()).statements[0].expression,
+        ts.factory.createToken(ts.SyntaxKind.ColonToken),
+        ts.factory.createNumericLiteral("-1")
+    );
+  } else {
+
+    for (let i = conditionals.length - 1; i >= 0; i--) {
+
+      const condition = conditionals[i];
+
+      if (condition.type === 'else') {
+        // @ts-ignore
+        expr = exprParser.parse(condition.slotIndex.toString()).statements[0].expression;
+        continue
+      }
+
+      if (condition.type === 'elseif') {
+
+        const conditionExpr =
+            // @ts-ignore
+            exprParser.parse(condition.attributeValue).statements[0].expression;
+
+        expr = ts.factory.createConditionalExpression(
+            conditionExpr,
+            ts.factory.createToken(ts.SyntaxKind.QuestionToken),
+            // @ts-ignore
+            exprParser.parse(condition.slotIndex.toString()).statements[0].expression, // must be ts.Expression
+            ts.factory.createToken(ts.SyntaxKind.ColonToken),
+            expr
+        );
+        continue
+      }
+
+      if (condition.type === 'if') {
+
+        const conditionExpr =
+            // @ts-ignore
+            exprParser.parse(condition.attributeValue).statements[0].expression;
+
+        expr = ts.factory.createConditionalExpression(
+            conditionExpr,
+            ts.factory.createToken(ts.SyntaxKind.QuestionToken),
+            // @ts-ignore
+            exprParser.parse(condition.slotIndex.toString()).statements[0].expression, // must be ts.Expression
+            ts.factory.createToken(ts.SyntaxKind.ColonToken),
+            expr
+        );
+
+      }
+
+    }
+
+  }
+
+  return ts.factory.createExpressionStatement(
+      ts.factory.createCallExpression(
+          ts.factory.createPropertyAccessExpression(
+              ts.factory.createIdentifier(i0),
+              ts.factory.createIdentifier("ɵɵconditional")
+          ),
+          undefined,
+          [
+            ts.factory.createNumericLiteral(containerIndex),
+              expr
+          ]
+      )
+  );
+}
+
+function buildIfElseChain(conditionals: any[]): ts.Statement {
+  const elseBlock = conditionals.find(c => c.type === 'else');
+
+  if (!elseBlock) {
+    throw new Error("else is required");
+  }
+
+  let stmt: ts.Statement = ts.factory.createReturnStatement(
+      ts.factory.createNumericLiteral(elseBlock.slotIndex)
+  );
+
+  // walk backwards, skipping else
+  for (let i = conditionals.length - 1; i >= 0; i--) {
+    const c = conditionals[i];
+
+    if (c.type === 'if' || c.type === 'elseif') {
+      stmt = ts.factory.createIfStatement(
+          ts.factory.createIdentifier(c.attributeValue),
+          ts.factory.createReturnStatement(
+              ts.factory.createNumericLiteral(c.slotIndex)
+          ),
+          stmt // 👈 else / else-if
+      );
+    }
+  }
+
+  return stmt;
+}
+
+function buildReturnTernary(conditionals: any[]): ts.Statement {
+  const elseBlock = conditionals.find(c => c.type === 'else');
+
+  let expr: ts.Expression = ts.factory.createNumericLiteral(
+      elseBlock.slotIndex
+  );
+
+  for (let i = conditionals.length - 1; i >= 0; i--) {
+    const c = conditionals[i];
+
+    if (c.type === 'if' || c.type === 'elseif') {
+      expr = ts.factory.createConditionalExpression(
+          ts.factory.createIdentifier(c.attributeValue),
+          ts.factory.createToken(ts.SyntaxKind.QuestionToken),
+          ts.factory.createNumericLiteral(c.slotIndex),
+          ts.factory.createToken(ts.SyntaxKind.ColonToken),
+          expr
+      );
+    }
+  }
+
+  return ts.factory.createReturnStatement(expr);
 }

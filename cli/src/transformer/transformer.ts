@@ -704,7 +704,10 @@ function generateTemplateStmts(templateStmts: Template[], sourceFile: ts.SourceF
         undefined,
         node.functionName,
         [],
-        [],
+        [
+          ts.factory.createParameterDeclaration([], undefined, "ctx"),
+          ts.factory.createParameterDeclaration([], undefined, "rf"),
+        ],
         undefined,
         block,
     )
