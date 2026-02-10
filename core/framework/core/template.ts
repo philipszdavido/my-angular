@@ -45,7 +45,16 @@ export function ɵɵtemplate(
 
 }
 
-export function ɵɵconditional<T>(matchingTemplateIndex: number, contextValue?: T) {
+//  containerIndex: number, matchingTemplateIndex: number,
+export function ɵɵconditional<T>(containerIndex: number, matchingTemplateIndex: number) {
+
+    // advance has set the currentTNode as the comment
+
+    const lView = runtime.currentLView
+    const tNode = lView.tView.data[runtime.selectedIndex];
+    const comment = lView.data[runtime.selectedIndex];
+
+
 
 }
 
