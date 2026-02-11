@@ -1,4 +1,4 @@
-import {runtime, TNode} from "./core";
+import {LView, runtime, TNode, TView, Element} from "./core";
 
 export function setCurrentTNode(tNode: TNode | null, isParent: boolean) {
     const lFrame = runtime;
@@ -20,4 +20,20 @@ export function setCurrentTNodeAsNotParent(): void {
     runtime.isParent = false;
 }
 
+export function createLView<T>(
+    parentLView: LView | null,
+    tView: TView,
+    context: T | null,
+    host: Element | null,
+    tHostNode: TNode | null) {
 
+    const lView: LView = {
+        context,
+        data: [],
+        host,
+        instances: [],
+        parent: parentLView,
+        tView: tView
+    }
+    return lView;
+}
