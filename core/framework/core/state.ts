@@ -33,7 +33,8 @@ export function createLView<T>(
         host,
         instances: [],
         parent: parentLView,
-        tView: tView
+        tView: tView,
+        context_value: null,
     }
     return lView;
 }

@@ -66,7 +66,8 @@ export function bootstrapApplication(component: any) {
     instances: [...componentDef.tView.blueprint],
     parent: null,
     host: hostElement,
-    context: componentInstance
+    context: componentInstance,
+    context_value: null
   };
 
   enterView(lView);

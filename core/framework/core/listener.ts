@@ -1,4 +1,4 @@
-import {enterView, leaveView, LView, runtime, TNode, TView, UPDATE} from "./core";
+import {enterView, leaveView, LView, runtime, TNode, TView, TViewType, UPDATE} from "./core";
 import {getComponent} from "./element";
 
 function listenerCallback(lView: LView, fn: any) {
@@ -26,6 +26,8 @@ export function ɵɵlistener(listener: string, fn: () => void) {
 
     const isComponent = componentType || false;
 
+    const componentLView = getComponentLView(lView);
+
     if (isComponent) {
 
         const childLView = lView.instances[tNode.index];
@@ -33,14 +35,14 @@ export function ɵɵlistener(listener: string, fn: () => void) {
         for( let output in childLView.tView.outputs) {
 
             if (output == listener) {
-                childLView.context[listener].addEventListener(listenerOutputCallback(lView, fn));
+                childLView.context[listener].addEventListener(listenerOutputCallback(componentLView, fn));
             }
 
         }
 
     } else {
 
-        appendListener(listener, runtime.currentTNode, lView, tView, listenerCallback(lView, fn))
+        appendListener(listener, runtime.currentTNode, lView, tView, listenerCallback(componentLView, fn))
 
     }
 
@@ -49,4 +51,14 @@ export function ɵɵlistener(listener: string, fn: () => void) {
 function appendListener(listener: string, tNode: TNode, lView: LView, tView: TView, fn: any) {
     const parent = lView.data[tNode.index];
     parent.addEventListener(listener, fn);
+}
+
+function getComponentLView(lView: LView) {
+
+    if (lView.tView.type == TViewType.Embedded) {
+        return getComponentLView(lView.parent)
+    }
+
+        return lView
+
 }

@@ -1,5 +1,17 @@
 import {AttributeMarker} from "./attribute_marker";
-import {CREATE, enterView, leaveView, LView, NameSpace, runtime, TNode, TNodeType, TView, UPDATE} from "./core";
+import {
+    CREATE,
+    enterView,
+    leaveView,
+    LView,
+    NameSpace,
+    runtime,
+    TNode,
+    TNodeType,
+    TView,
+    TViewType,
+    UPDATE
+} from "./core";
 import {getCurrentParentTNode, setCurrentTNode} from "./state";
 
 const COMPONENT_VARIABLE = '%COMP%';
@@ -20,7 +32,7 @@ export function ɵɵelementStart(index: number, tag: string, attrsIndex?: number
         tNode = tView.data[index] as TNode;
     } else {
         const parentNode = getCurrentParentTNode();
-        tNode = createTNode(index, tag, tView, parentNode);
+        tNode = createTNode(index, tag, TNodeType.Element, null, parentNode);
         tView.data[index] = tNode;
     }
 
@@ -81,7 +93,17 @@ export function ɵɵelementStart(index: number, tag: string, attrsIndex?: number
 }
 
 export function appendChild(native: Element | any, lView: LView, tView: TView, tNode: TNode) {
+
     if (tNode == null) {
+
+        if (tView.type == TViewType.Embedded) {
+            // we use insertBefore
+            const anchorNode = lView.host
+            const parentNode = anchorNode.parentElement; //lView.parent.host;
+            return parentNode.insertBefore(native, anchorNode);
+
+        }
+
         return lView.host.appendChild(native);
     }
 
@@ -89,10 +111,10 @@ export function appendChild(native: Element | any, lView: LView, tView: TView, t
 
 }
 
-export function createTNode(index: number, tag: string, tView: TView, parentNode: TNode) {
+export function createTNode(index: number, tag: string, type: TNodeType, tView: TView, parentNode: TNode) {
    return {
-        type: TNodeType.Element,
-            index: index,
+        type,
+        index: index,
         value: tag,
         tView: tView,
         parent: parentNode
@@ -136,6 +158,7 @@ function renderComponent(component: any, tView: TView, el: any, parent: LView, i
             parent: parent,
             host: el,
             context: componentInstance,
+            context_value: null,
         };
 
         parent.instances[index] = lView;

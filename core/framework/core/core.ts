@@ -119,7 +119,7 @@ interface LFrame {
   inI18n: boolean;
 }
 
-type Element = HTMLElement | Text | SVGElement | Comment;
+export type Element = HTMLElement | Text | SVGElement | Comment;
 type TemplateFn = (RenderFlags, any) => void;
 export interface Type<T> extends Function {
   new (...args: any[]): T;
@@ -176,6 +176,8 @@ export type LView = {
   parent: LView | null; // parent of this LView
   host: Element; // HTMLElement or Text node of this LView
   context: any; // class instance of this LView
+
+  context_value: any | null;
 };
 
 export type TNode = {

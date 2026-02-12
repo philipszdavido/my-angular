@@ -1,6 +1,7 @@
-import {runtime, TNode, TView, TViewType} from "./core";
+import {enterView, leaveView, runtime, TNode, TNodeType, TView, TViewType} from "./core";
 import {appendChild, createTNode} from "./element";
-import {setCurrentTNode} from "./state";
+import {createLView, setCurrentTNode} from "./state";
+import {RenderFlags} from "./render_flags";
 
 export function ɵɵtemplate(
     index: number,
@@ -29,12 +30,13 @@ export function ɵɵtemplate(
         data: []
     }
 
-    const tNode: TNode = createTNode(index, tagName, declarationTView, currentTNode);
+    const parentTNode = runtime.isParent ? runtime.currentTNode : runtime.currentTNode.parent
+    const tNode: TNode = createTNode(index, tagName, TNodeType.Container, embeddedTView, parentTNode);
     declarationTView.data[index] = tNode;
 
     // create comment
     const comment = document.createComment(tagName)
-    runtime.currentLView.data[index] = comment;
+    declarationLView.data[index] = comment;
     // set node in runtime
 
     currentTNode.tView = embeddedTView;
@@ -50,11 +52,38 @@ export function ɵɵconditional<T>(containerIndex: number, matchingTemplateIndex
 
     // advance has set the currentTNode as the comment
 
-    const lView = runtime.currentLView
-    const tNode = lView.tView.data[runtime.selectedIndex];
-    const comment = lView.data[runtime.selectedIndex];
+    if (matchingTemplateIndex !== -1) {
 
+        const lView = runtime.currentLView
+        const tNode = lView.tView.data[matchingTemplateIndex] as TNode;
+        const comment = lView.data[runtime.selectedIndex];
+        const embeddedTView = tNode.tView
 
+        // get and call the template
+        const templateFn = tNode.tView.template;
+
+        // setCurrentTNode(tNode, false)
+        const context = lView.context;
+        const RenderFlag = RenderFlags.CREATE;
+
+        // we will need to create an embbedded LView which will pass to enterView
+        const embeddedLView = createLView<T>(
+            lView,
+            embeddedTView,
+            context,
+            null,
+            tNode
+        );
+
+        embeddedLView.host = comment;
+
+        enterView(embeddedLView)
+
+        templateFn(context, RenderFlag);
+
+        leaveView()
+
+    }
 
 }
 
