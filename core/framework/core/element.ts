@@ -159,6 +159,7 @@ function renderComponent(component: any, tView: TView, el: any, parent: LView, i
             host: el,
             context: componentInstance,
             context_value: null,
+            queries: null,
         };
 
         parent.instances[index] = lView;

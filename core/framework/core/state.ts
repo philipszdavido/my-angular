@@ -35,6 +35,7 @@ export function createLView<T>(
         parent: parentLView,
         tView: tView,
         context_value: null,
+        queries: null,
     }
     return lView;
 }

@@ -1,6 +1,12 @@
 export const CREATE = 1;
 export const UPDATE = 2;
 
+export interface LQuery<T> {}
+
+export interface LQueries {
+  queries: LQuery<any>[];
+}
+
 /**
  *
  */
@@ -178,6 +184,7 @@ export type LView = {
   context: any; // class instance of this LView
 
   context_value: any | null;
+  queries: LQueries
 };
 
 export type TNode = {

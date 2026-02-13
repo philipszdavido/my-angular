@@ -1,9 +1,9 @@
-import {enterView, leaveView, runtime, TNode, TNodeType, TView, TViewType} from "./core";
+import {enterView, leaveView, LView, runtime, TNode, TNodeType, TView, TViewType} from "./core";
 import {appendChild, createTNode} from "./element";
 import {createLView, setCurrentTNode} from "./state";
 import {RenderFlags} from "./render_flags";
 
-export function ɵɵtemplate(
+export function ɵɵtemplate<T>(
     index: number,
     templateFn: () => void,
     tagName: string,
@@ -43,6 +43,18 @@ export function ɵɵtemplate(
 
     setCurrentTNode(tNode, false)
 
+    // const context = declarationLView.context;
+    //
+    // const embeddedLView = createLView<T>(
+    //     declarationLView,
+    //     embeddedTView,
+    //     context,
+    //     null,
+    //     tNode
+    // );
+    //
+    // declarationLView.instances[index] = embeddedLView;
+
     appendChild(comment, declarationLView, declarationTView, tNode.parent);
 
 }
@@ -57,7 +69,12 @@ export function ɵɵconditional<T>(containerIndex: number, matchingTemplateIndex
         const lView = runtime.currentLView
         const tNode = lView.tView.data[matchingTemplateIndex] as TNode;
         const comment = lView.data[runtime.selectedIndex];
+        const templateLView = lView.instances[runtime.selectedIndex];
         const embeddedTView = tNode.tView
+
+        if (templateLView) {
+            clearContainer(templateLView);
+        }
 
         // get and call the template
         const templateFn = tNode.tView.template;
@@ -76,6 +93,7 @@ export function ɵɵconditional<T>(containerIndex: number, matchingTemplateIndex
         );
 
         embeddedLView.host = comment;
+        lView.instances[runtime.selectedIndex] = embeddedLView;
 
         enterView(embeddedLView)
 
@@ -85,6 +103,19 @@ export function ɵɵconditional<T>(containerIndex: number, matchingTemplateIndex
 
     }
 
+}
+
+function clearContainer(templateLView: LView) {
+    if (templateLView.data.length > 0) {
+        [...templateLView.data].reverse().forEach(el => {
+            // we know els are siblings inserted before the lView host
+            if (el && el.parentElement) {
+                el.parentElement.removeChild(el);
+            }
+
+        })
+
+    }
 }
 
 // export function ɵɵrepeater

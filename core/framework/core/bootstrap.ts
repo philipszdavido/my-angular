@@ -67,7 +67,8 @@ export function bootstrapApplication(component: any) {
     parent: null,
     host: hostElement,
     context: componentInstance,
-    context_value: null
+    context_value: null,
+    queries: null,
   };
 
   enterView(lView);
