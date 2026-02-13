@@ -39,3 +39,27 @@ export function createLView<T>(
     }
     return lView;
 }
+
+// export function createLContainer(
+//     hostNative: RElement | RComment | LView,
+//     currentView: LView,
+//     native: RComment,
+//     tNode: TNode,
+// ): LContainer {
+//
+//     const lContainer: LContainer = [
+//         hostNative, // host native
+//         true, // Boolean `true` in this position signifies that this is an `LContainer`
+//         0, // flags
+//         currentView, // parent
+//         null, // next
+//         tNode, // t_host
+//         null, // dehydrated views
+//         native, // native,
+//         null, // view refs
+//         null, // moved views
+//     ];
+//
+//     return lContainer;
+// }
+

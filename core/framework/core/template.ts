@@ -43,17 +43,20 @@ export function ɵɵtemplate<T>(
 
     setCurrentTNode(tNode, false)
 
-    // const context = declarationLView.context;
-    //
-    // const embeddedLView = createLView<T>(
-    //     declarationLView,
-    //     embeddedTView,
-    //     context,
-    //     null,
-    //     tNode
-    // );
-    //
-    // declarationLView.instances[index] = embeddedLView;
+    const context = declarationLView.context;
+
+    const embeddedLView = createLView<T>(
+        declarationLView,
+        embeddedTView,
+        context,
+        null,
+        tNode
+    );
+
+    declarationLView.instances[index] = embeddedLView;
+
+    // const lContainer = createLContainer(comment, declarationLView, comment, tNode);
+    // declarationLView[index + HEADER_OFFSET] = lContainer;
 
     appendChild(comment, declarationLView, declarationTView, tNode.parent);
 
@@ -68,8 +71,8 @@ export function ɵɵconditional<T>(containerIndex: number, matchingTemplateIndex
 
         const lView = runtime.currentLView
         const tNode = lView.tView.data[matchingTemplateIndex] as TNode;
-        const comment = lView.data[runtime.selectedIndex];
-        const templateLView = lView.instances[runtime.selectedIndex];
+        const comment = lView.data[matchingTemplateIndex];
+        const templateLView = lView.instances[matchingTemplateIndex];
         const embeddedTView = tNode.tView
 
         if (templateLView) {
@@ -83,7 +86,7 @@ export function ɵɵconditional<T>(containerIndex: number, matchingTemplateIndex
         const context = lView.context;
         const RenderFlag = RenderFlags.CREATE;
 
-        // we will need to create an embbedded LView which will pass to enterView
+        // we will need to create an embedded LView which will pass to enterView
         const embeddedLView = createLView<T>(
             lView,
             embeddedTView,
@@ -93,7 +96,7 @@ export function ɵɵconditional<T>(containerIndex: number, matchingTemplateIndex
         );
 
         embeddedLView.host = comment;
-        lView.instances[runtime.selectedIndex] = embeddedLView;
+        lView.instances[matchingTemplateIndex] = embeddedLView;
 
         enterView(embeddedLView)
 
