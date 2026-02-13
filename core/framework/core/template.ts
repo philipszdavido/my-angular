@@ -13,7 +13,6 @@ export function ɵɵtemplate<T>(
 
     const declarationLView = runtime.currentLView
     const declarationTView = declarationLView.tView;
-    const currentTNode = runtime.currentTNode;
     // create TView
 
     const embeddedTView: TView = {
@@ -25,7 +24,7 @@ export function ɵɵtemplate<T>(
         styles: [''],
         inputs: null,
         outputs: null,
-        id: "",
+        id: index.toString(),
         type: TViewType.Embedded,
         data: []
     }
@@ -38,8 +37,6 @@ export function ɵɵtemplate<T>(
     const comment = document.createComment(tagName)
     declarationLView.data[index] = comment;
     // set node in runtime
-
-    currentTNode.tView = embeddedTView;
 
     setCurrentTNode(tNode, false)
 
@@ -55,15 +52,12 @@ export function ɵɵtemplate<T>(
 
     declarationLView.instances[index] = embeddedLView;
 
-    // const lContainer = createLContainer(comment, declarationLView, comment, tNode);
-    // declarationLView[index + HEADER_OFFSET] = lContainer;
-
     appendChild(comment, declarationLView, declarationTView, tNode.parent);
 
 }
 
 //  containerIndex: number, matchingTemplateIndex: number,
-export function ɵɵconditional<T>(containerIndex: number, matchingTemplateIndex: number) {
+export function ɵɵconditional<T>(containerIndex: number, containerEndIndex: number, matchingTemplateIndex: number) {
 
     // advance has set the currentTNode as the comment
 
@@ -72,17 +66,19 @@ export function ɵɵconditional<T>(containerIndex: number, matchingTemplateIndex
         const lView = runtime.currentLView
         const tNode = lView.tView.data[matchingTemplateIndex] as TNode;
         const comment = lView.data[matchingTemplateIndex];
-        const templateLView = lView.instances[matchingTemplateIndex];
         const embeddedTView = tNode.tView
 
-        if (templateLView) {
-            clearContainer(templateLView);
+        for (let i = containerIndex; i <= containerEndIndex; i++) {
+            const currentLView = lView.instances[i]
+            if (currentLView) {
+                clearContainer(currentLView);
+            }
+            lView.instances[i] = null;
         }
 
         // get and call the template
         const templateFn = tNode.tView.template;
 
-        // setCurrentTNode(tNode, false)
         const context = lView.context;
         const RenderFlag = RenderFlags.CREATE;
 
@@ -121,6 +117,6 @@ function clearContainer(templateLView: LView) {
     }
 }
 
-// export function ɵɵrepeater
+export function ɵɵrepeater() {}
 
-// export function ɵɵpipeBind1
+export function ɵɵpipeBind1() {}
