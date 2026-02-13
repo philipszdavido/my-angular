@@ -10,7 +10,7 @@ import {
   $event,
   ctx,
   i0,
-  ɵɵadvance,
+  ɵɵadvance, ɵɵconditional,
   ɵɵelementEnd, ɵɵelementStart,
   ɵɵlistener,
   ɵɵproperty,
@@ -285,11 +285,16 @@ export class ViewGenerator {
 
     if (tag === "ng-while") {}
 
+    if (tag === "ng-template") {
+
+    }
+
     return {creation: "", update: ""};
 
   }
 
   processNgIf(node: Element, index: number) {
+    const containerIndex = index;
     const functionName = "Template_" + index + "_tag_Conditional";
     const conditions = []
 
@@ -395,7 +400,7 @@ export class ViewGenerator {
 
     this.updateStmts.push(generateAdvanceNode(index.toString()))
 
-    const updateTemplateNode = generateConditionalNode(conditions, 0)
+    const updateTemplateNode = generateConditionalNode(conditions, containerIndex)
 
     this.updateStmts.push(updateTemplateNode)
 
@@ -618,42 +623,43 @@ function generateConditionalNode(conditionals: any[], containerIndex: number) {
 
     for (let i = conditionals.length - 1; i >= 0; i--) {
 
-      const condition = conditionals[i];
+      const { type, slotIndex, attributeValue } = conditionals[i];
+      const conditionType = type
 
-      if (condition.type === 'else') {
+      if (conditionType === 'else') {
         // @ts-ignore
-        expr = exprParser.parse(condition.slotIndex.toString()).statements[0].expression;
+        expr = exprParser.parse(slotIndex.toString()).statements[0].expression;
         continue
       }
 
-      if (condition.type === 'elseif') {
+      if (conditionType === 'elseif') {
 
         const conditionExpr =
             // @ts-ignore
-            exprParser.parse(condition.attributeValue).statements[0].expression;
+            exprParser.parse(attributeValue).statements[0].expression;
 
         expr = ts.factory.createConditionalExpression(
             conditionExpr,
             ts.factory.createToken(ts.SyntaxKind.QuestionToken),
             // @ts-ignore
-            exprParser.parse(condition.slotIndex.toString()).statements[0].expression, // must be ts.Expression
+            exprParser.parse(slotIndex.toString()).statements[0].expression,
             ts.factory.createToken(ts.SyntaxKind.ColonToken),
             expr
         );
         continue
       }
 
-      if (condition.type === 'if') {
+      if (conditionType === 'if') {
 
         const conditionExpr =
             // @ts-ignore
-            exprParser.parse(condition.attributeValue).statements[0].expression;
+            exprParser.parse(attributeValue).statements[0].expression;
 
         expr = ts.factory.createConditionalExpression(
             conditionExpr,
             ts.factory.createToken(ts.SyntaxKind.QuestionToken),
             // @ts-ignore
-            exprParser.parse(condition.slotIndex.toString()).statements[0].expression, // must be ts.Expression
+            exprParser.parse(slotIndex.toString()).statements[0].expression, // must be ts.Expression
             ts.factory.createToken(ts.SyntaxKind.ColonToken),
             expr
         );
@@ -668,7 +674,7 @@ function generateConditionalNode(conditionals: any[], containerIndex: number) {
       ts.factory.createCallExpression(
           ts.factory.createPropertyAccessExpression(
               ts.factory.createIdentifier(i0),
-              ts.factory.createIdentifier("ɵɵconditional")
+              ts.factory.createIdentifier(ɵɵconditional)
           ),
           undefined,
           [
