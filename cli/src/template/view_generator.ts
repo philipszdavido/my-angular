@@ -670,6 +670,8 @@ function generateConditionalNode(conditionals: any[], containerIndex: number) {
 
   }
 
+  const containerEndIndex = containerIndex + conditionals.length - 1
+
   return ts.factory.createExpressionStatement(
       ts.factory.createCallExpression(
           ts.factory.createPropertyAccessExpression(
@@ -679,6 +681,7 @@ function generateConditionalNode(conditionals: any[], containerIndex: number) {
           undefined,
           [
             ts.factory.createNumericLiteral(containerIndex),
+            ts.factory.createNumericLiteral(containerEndIndex),
               expr
           ]
       )
