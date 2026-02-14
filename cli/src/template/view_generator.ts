@@ -53,6 +53,7 @@ export class ViewGenerator {
   private readonly templateStmts: Template[] = []
   private readonly consts: ts.Expression[] = [];
   private slot = 0;
+  private readonly implicitVariables = []
 
   constructor(options: ViewGeneratorOptions = {}) {
     this.options = options;
@@ -141,7 +142,7 @@ export class ViewGenerator {
         creation += `, ${index + 1}`;
 
         this.updateStmts.push(generateAdvanceNode(index.toString()));
-        this.updateStmts.push(generatePropertyNode(propertyName, attributes[attr]));
+        this.updateStmts.push(generatePropertyNode(propertyName, attributes[attr], this.implicitVariables));
 
         update += `i0.ɵɵproperty("${propertyName}", ctx.${attributes[attr]});\n`;
       } else {
@@ -228,7 +229,7 @@ export class ViewGenerator {
         this.stmts.push(generateTextNode(index));
 
         this.updateStmts.push(generateAdvanceNode(index.toString()));
-        this.updateStmts.push(generateTextInterpolateNode(this.parseInterpolations(text)))
+        this.updateStmts.push(generateTextInterpolateNode(this.parseInterpolations(text), this.implicitVariables))
 
         return {
           creation: `i0.ɵɵtext(${index});\n`,
@@ -282,7 +283,7 @@ export class ViewGenerator {
     }
 
     if (tag === "ng-for") {
-      //return this.processNgFor(node, index);
+      return this.processNgFor(node, index);
     }
 
     if (tag === "ng-switch") {
@@ -290,7 +291,7 @@ export class ViewGenerator {
     }
 
     if (tag === "ng-while") {
-      //return this.processNgWhile(node, index);
+      return this.processNgWhile(node, index);
     }
 
     // ng-cloak
@@ -456,6 +457,58 @@ export class ViewGenerator {
 
     }
 
+    const functionName = "Template_For_" + index + "_Tag";
+    const viewGenerator = new ViewGenerator();
+    viewGenerator.setImplicitVariables(iterableIdentifier, this.implicitVariables);
+    viewGenerator.processChildren(node.children);
+
+    const repeaterCreateNode = ts.factory.createExpressionStatement(
+        ts.factory.createCallExpression(
+            ts.factory.createPropertyAccessExpression(
+                ts.factory.createIdentifier("i0"),
+                ts.factory.createIdentifier("ɵɵrepeaterCreate")
+            ), undefined,
+            [
+              ts.factory.createNumericLiteral(index),
+              ts.factory.createIdentifier(functionName),
+                ts.factory.createNumericLiteral(0),
+              ts.factory.createNumericLiteral(0),
+                ts.factory.createStringLiteral(node.tagName)
+            ]
+        )
+    );
+
+    this.updateStmts.push(generateAdvanceNode(index.toString()))
+
+    const exprParser = new ExpressionParser();
+    const exprParserSourceFile = exprParser.parse(iterable, this.implicitVariables);
+
+    const updateRepeaterNode =  ts.factory.createExpressionStatement(
+        ts.factory.createCallExpression(
+            ts.factory.createPropertyAccessExpression(
+                ts.factory.createIdentifier(i0),
+                ts.factory.createIdentifier("ɵɵrepeater")
+            ),
+            undefined,
+            [
+              // @ts-ignore
+              exprParserSourceFile.statements[0].expression
+            ]
+        )
+    )
+
+    this.stmts.push(repeaterCreateNode);
+
+    this.updateStmts.push(updateRepeaterNode);
+
+    this.templateStmts.push({
+      functionName: functionName,
+      updateStmts: [...viewGenerator.updateStmts],
+      stmts: [...viewGenerator.stmts],
+      templateStmts: [...viewGenerator.templateStmts]
+    });
+
+    return {creation: "", update: ""};
 
   }
 
@@ -550,8 +603,14 @@ export class ViewGenerator {
   }
 
   private processNgWhile(node: Element, index: number) {
-    
+    return {creation: "", update: ""};
   }
+
+  setImplicitVariables(variableName: string, parentImplicitVariables: string[]) {
+    this.implicitVariables.push(...parentImplicitVariables);
+    this.implicitVariables.push(variableName);
+  }
+
 }
 
 function generateElementStartNode(
@@ -649,10 +708,10 @@ function generateListenerNode(eventName: string, tag: string, index: number, han
   )
 }
 
-function generatePropertyNode(propertyName: string, value: string) {
+function generatePropertyNode(propertyName: string, value: string, implicitVariables: string[]) {
 
   const exprParser = new ExpressionParser();
-  const transformedNode = exprParser.parse(value);
+  const transformedNode = exprParser.parse(value, implicitVariables);
 
   return ts.factory.createExpressionStatement(
         ts.factory.createCallExpression(
@@ -683,7 +742,7 @@ function generateAdvanceNode(index: string) {
   ))
 }
 
-function generateTextInterpolateNode(bindingExpressions: InterpolationType[]) {
+function generateTextInterpolateNode(bindingExpressions: InterpolationType[], implicitVariables: string[]) {
 
   const exprParser = new ExpressionParser();
 
@@ -691,7 +750,7 @@ function generateTextInterpolateNode(bindingExpressions: InterpolationType[]) {
     if (binding.type === 'text') {
       return factory.createStringLiteral(binding.content)
     } else if (binding.type === 'expression') {
-      const transformedNode = exprParser.parse(binding.content);
+      const transformedNode = exprParser.parse(binding.content, implicitVariables);
       // @ts-ignore
       return transformedNode.statements[0].expression;
     }
