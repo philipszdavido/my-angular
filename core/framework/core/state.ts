@@ -40,6 +40,24 @@ export function createLView<T>(
     return lView;
 }
 
+/**
+ * Return the current `LView`.
+ */
+export function getLView<T>(): LView {
+    return runtime.currentLView as LView;
+}
+
+/**
+ * Return the current `TView`.
+ */
+export function getTView(): TView {
+    return runtime.currentLView.tView as TView;
+}
+
+export function getSelectedIndex() {
+    return runtime.selectedIndex;
+}
+
 // export function createLContainer(
 //     hostNative: RElement | RComment | LView,
 //     currentView: LView,
