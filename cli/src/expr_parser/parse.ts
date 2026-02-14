@@ -13,7 +13,7 @@ function visitCallExpressionArguments(node: ts.CallExpression) {
 
 }
 
-export function createTransformer(ctxVariable: string) {
+export function createTransformer(ctxVariable: string, implicitVariables: string[] = []) {
     return (context: ts.TransformationContext) => {
         const visitor: ts.Visitor = (node: ts.Node): ts.Node => {
 
@@ -26,6 +26,17 @@ export function createTransformer(ctxVariable: string) {
             }
 
             if(ts.isIdentifier(node)) {
+
+                if (implicitVariables.includes(node.text)) {
+                    return ts.factory.createPropertyAccessExpression(
+                        ts.factory.createPropertyAccessExpression(
+                            ts.factory.createIdentifier(ctxVariable),
+                            ts.factory.createIdentifier("$implicit")
+                        ),
+                        node,
+                    )
+                }
+
                 return ts.factory.createPropertyAccessExpression(
                     ts.factory.createIdentifier(ctxVariable),
                     node
@@ -43,6 +54,23 @@ export function createTransformer(ctxVariable: string) {
             // If the node is an identifier (and not a property name or parameter declaration), prefix it with ctx.
             if (ts.isIdentifier(node) && !isPropertyName(node) && !isParameter(node)) {
                 return ts.factory.createPropertyAccessExpression(ts.factory.createIdentifier(ctxVariable), node);
+            }
+
+            if (ts.isPropertyAccessExpression(node)) {
+                const root = getRootIdentifier(node);
+
+                if (!root) return node;
+
+                const isImplicit = implicitVariables.includes(root.text);
+
+                const base = isImplicit
+                    ? ts.factory.createPropertyAccessExpression(
+                        ts.factory.createIdentifier(ctxVariable),
+                        "$implicit"
+                    )
+                    : ts.factory.createIdentifier(ctxVariable);
+
+                return rebuildWithNewRoot(node, base);
             }
 
             // Handle property access expressions (e.g., a.b.c)
@@ -121,10 +149,43 @@ function isParameter(node: ts.Node): boolean {
     return ts.isParameter(node.parent);
 }
 
+function getRootIdentifier(node: ts.Expression): ts.Identifier | null {
+    let current = node;
+
+    while (ts.isPropertyAccessExpression(current)) {
+        current = current.expression;
+    }
+
+    return ts.isIdentifier(current) ? current : null;
+}
+
+function rebuildWithNewRoot(
+    node: ts.PropertyAccessExpression,
+    newRoot: ts.Expression
+): ts.Expression {
+    const parts: string[] = [];
+
+    let current: ts.Expression = node;
+
+    while (ts.isPropertyAccessExpression(current)) {
+        parts.unshift(current.name.text);
+        current = current.expression;
+    }
+
+    // current is root identifier
+    let result: ts.Expression = newRoot;
+
+    for (const part of parts) {
+        result = ts.factory.createPropertyAccessExpression(result, part);
+    }
+
+    return result;
+}
+
 // Function to transform JavaScript code
 function transformCode(code: string, ctxVariable: string): string {
     const sourceFile = ts.createSourceFile('temp.ts', code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-    const result = ts.transform(sourceFile, [createTransformer(ctxVariable)]);
+    const result = ts.transform(sourceFile, [createTransformer(ctxVariable, [])]);
     const printer = ts.createPrinter();
     const transformedSourceFile = result.transformed[0];
     // @ts-ignore
