@@ -117,6 +117,25 @@ function clearContainer(templateLView: LView) {
     }
 }
 
-export function ɵɵrepeater() {}
+export function ɵɵrepeater(iterable: Array<any>) {
+
+}
 
 export function ɵɵpipeBind1() {}
+
+export function ɵɵrepeaterCreate(
+    index: number,
+    templateFn: () => void,
+    decls: number,
+    vars: number,
+    tagName: string | null,
+    attrsIndex: number | null,
+    trackByFn: () => void,
+    trackByUsesComponentInstance?: boolean,
+    emptyTemplateFn?: () => void,
+    emptyDecls?: number,
+    emptyVars?: number,
+    emptyTagName?: string | null,
+    emptyAttrsIndex?: number | null): void {
+
+}
