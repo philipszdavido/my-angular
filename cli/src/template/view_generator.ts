@@ -1,7 +1,5 @@
-import { parseDocument } from "htmlparser2";
-import { Element, Node, Text } from "domhandler";
-import { camelCase } from "lodash";
-import ts = require("typescript");
+import {parseDocument} from "htmlparser2";
+import {Element, Node, Text} from "domhandler";
 import {factory} from "typescript";
 import {ExpressionParser} from "../expr_parser/expr_parser";
 import {RenderFlags} from "../render/flags";
@@ -10,14 +8,18 @@ import {
   $event,
   ctx,
   i0,
-  ɵɵadvance, ɵɵconditional,
-  ɵɵelementEnd, ɵɵelementStart,
+  ɵɵadvance,
+  ɵɵconditional,
+  ɵɵelementEnd,
+  ɵɵelementStart,
   ɵɵlistener,
   ɵɵproperty,
   ɵɵtext,
   ɵɵtextInterpolate
 } from "../constants/constants";
 import {CSSParser} from "../css_parser/css_parser";
+import {ElementType} from "domelementtype";
+import ts = require("typescript");
 
 export interface ViewGeneratorOptions {
   // Add any configuration options here
@@ -28,7 +30,7 @@ type InterpolationType = {
   content: string
 }
 
-const templatesNodeNames = ["ng-if", "ng-for", /*"ng-else", "ng-else-if",*/ /* "ng-empty", "ng-case", */ "ng-switch" /*, "ng-default"*/, "ng-while"]
+const templatesNodeNames = ["ng-if", "ng-for", /*"ng-else", "ng-else-if",*/ /* "ng-empty", "ng-case", */ "ng-switch" /*, "ng-default"*/, "ng-while", "ng-template"]
 const SVG_TAG_REWRITE: Record<string, string> = {
   clippath: 'clipPath',
   lineargradient: 'linearGradient',
@@ -279,11 +281,19 @@ export class ViewGenerator {
       return this.processNgIf(node, index);
     }
 
-    if (tag === "ng-for") {}
+    if (tag === "ng-for") {
+      //return this.processNgFor(node, index);
+    }
 
-    if (tag === "ng-switch") {}
+    if (tag === "ng-switch") {
+      return this.processNgSwitch(node, index);
+    }
 
-    if (tag === "ng-while") {}
+    if (tag === "ng-while") {
+      //return this.processNgWhile(node, index);
+    }
+
+    // ng-cloak
 
     if (tag === "ng-template") {
 
@@ -420,6 +430,128 @@ export class ViewGenerator {
     })
   }
 
+  private processNgFor(node: Element, index: number) {
+    // item="user" of="users" trackBy="id"
+    // decls="arr of prim; track $index; let last = $last"
+
+    let iterableIdentifier: string
+    let iterable: string;
+
+    const keys = Object.keys(node.attribs);
+
+    if (keys.length <= 0) {
+      throw Error("");
+    }
+
+    if (keys.includes("decls")) {
+
+      const parts = node.attribs["decls"].split(";");
+
+    } else {
+
+      for (const attrib in node.attribs) {
+        if (attrib === "of") iterable = node.attribs[attrib];
+        if (attrib === "item") iterableIdentifier = node.attribs[attrib];
+      }
+
+    }
+
+
+  }
+
+  private processNgSwitch(node: Element, index: number) {
+    const conditions = []
+    const condition = node.attribs["condition"];
+
+    if (!condition) {
+      throw Error("ng-switch must have a condition.")
+    }
+
+    node.childNodes.forEach(childNode => {
+
+      if (childNode.type == ElementType.Tag) {
+
+        const slotIndex = this.slot++
+        const tagName = childNode.tagName;
+
+        switch (tagName) {
+          case 'ng-case': {
+
+            const functionName = "NgSwitch_Case_" + slotIndex + "_Template"
+
+            const templateNode = generateTemplateNode(slotIndex, functionName, tagName);
+
+            this.stmts.push(templateNode)
+
+            conditions.push({
+              slotIndex,
+              type: conditions.length == 0 ? "if" : "elseif",
+              attributeValue: condition + " === " + childNode.attribs["value"],
+            })
+
+            const viewGenerator = new ViewGenerator();
+            viewGenerator.processChildNodes(childNode);
+
+            this.templateStmts.push({
+              functionName: functionName,
+              updateStmts: [...viewGenerator.updateStmts],
+              stmts: [...viewGenerator.stmts],
+              templateStmts: [...viewGenerator.templateStmts]
+            });
+
+            break;
+
+          }
+
+          case 'ng-default': {
+
+            const functionName = "NgSwitch_Default_Case_" + slotIndex + "_Template"
+
+            const templateNode = generateTemplateNode(slotIndex, functionName, tagName);
+
+            this.stmts.push(templateNode)
+
+            conditions.push({
+              slotIndex,
+              type: "else",
+              attributeValue: undefined,
+            })
+
+            const viewGenerator = new ViewGenerator();
+            viewGenerator.processChildNodes(childNode);
+
+            this.templateStmts.push({
+              functionName: functionName,
+              updateStmts: [...viewGenerator.updateStmts],
+              stmts: [...viewGenerator.stmts],
+              templateStmts: [...viewGenerator.templateStmts]
+            });
+
+            break;
+
+          }
+
+          default: {
+            throw Error("ng-switch must have a default tag.")
+          }
+        }
+      }
+    })
+
+    this.updateStmts.push(generateAdvanceNode(index.toString()))
+
+    const containerIndex = conditions.find(condition => condition.type == "if")?.slotIndex;
+
+    const updateTemplateNode = generateConditionalNode(conditions, containerIndex)
+
+    this.updateStmts.push(updateTemplateNode)
+
+    return {creation: "", update: ""};
+  }
+
+  private processNgWhile(node: Element, index: number) {
+    
+  }
 }
 
 function generateElementStartNode(
