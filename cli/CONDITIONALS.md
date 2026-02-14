@@ -23,15 +23,15 @@
 ```
 
 # for
-```angular2html
+```html
 <ng-for item="user" of="users" trackBy="id">
   <div>{{ user.name }}</div>
 </ng-for>
 ```
 # switch
 
-```angular2html
-<ng-switch expression="status">
+```html
+<ng-switch condition="status">
   <ng-case value="'loading'">
     <spinner />
   </ng-case>
@@ -44,7 +44,6 @@
     <div>Error</div>
   </ng-default>
 </ng-switch>
-
 ```
 
 # while
