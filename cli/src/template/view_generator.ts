@@ -14,11 +14,14 @@ import {
   ɵɵelementStart,
   ɵɵlistener,
   ɵɵproperty,
+  ɵɵrepeater,
+  ɵɵrepeaterCreate,
   ɵɵtext,
   ɵɵtextInterpolate
 } from "../constants/constants";
 import {CSSParser} from "../css_parser/css_parser";
 import {ElementType} from "domelementtype";
+import {replaceCustomDirectivesAndPipes} from "../expr_parser/html_string_to_template_ast";
 import ts = require("typescript");
 
 export interface ViewGeneratorOptions {
@@ -63,7 +66,7 @@ export class ViewGenerator {
   }
 
   generateViewCode(html: string) {
-    const ngHtmlString = html;//replaceCustomDirectivesAndPipes(html)
+    const ngHtmlString = replaceCustomDirectivesAndPipes(html)
     const document = parseDocument(ngHtmlString);
     const nodes = document.childNodes;
 
@@ -435,45 +438,93 @@ export class ViewGenerator {
     // item="user" of="users" trackBy="id"
     // decls="arr of prim; track $index; let last = $last"
 
+    let emptyTemplateFnName;
     let iterableIdentifier: string
     let iterable: string;
+    let trackBy: string;
 
     const keys = Object.keys(node.attribs);
 
     if (keys.length <= 0) {
-      throw Error("");
+      throw Error("'ng-for/@for' must contain 'of' and 'item'");
     }
 
     if (keys.includes("decls")) {
 
       const parts = node.attribs["decls"].split(";");
+      parts.forEach((part, index) => {
+
+        if (part?.split(' ')?.[1] === 'of') {
+
+          const iterableParts = part.split(' ');
+          iterableIdentifier = iterableParts[0];
+          iterable = iterableParts[1];
+
+        } else if (part?.trim()?.split(' ')?.[0] === "track") {
+          trackBy = part?.trim()?.split(' ')?.[1]
+        } else if (part?.trim()?.split(' ')?.[0] === "let") {
+        }
+
+      })
 
     } else {
 
       for (const attrib in node.attribs) {
-        if (attrib === "of") iterable = node.attribs[attrib];
-        if (attrib === "item") iterableIdentifier = node.attribs[attrib];
+
+        const attribValue = node.attribs[attrib];
+
+        if (attrib === "of") iterable = attribValue;
+        if (attrib === "item") iterableIdentifier = attribValue;
+        if (attrib === "trackBy") trackBy = attribValue;
+
       }
 
     }
 
+    const ngForSibling = getNgForEmptySibling(node)
+
+    if (ngForSibling) {
+      if (ngForSibling.type === ElementType.Tag && ngForSibling.tagName === 'ng-for-empty') {
+
+        const ngForEmptyIndex = index;
+        emptyTemplateFnName = "Template_For_Empty_" + ngForEmptyIndex + "_For"
+
+        const viewGenerator = this.processNgEmpty(ngForSibling);
+
+        this.templateStmts.push({
+          functionName: emptyTemplateFnName,
+          updateStmts: [...viewGenerator.updateStmts],
+          stmts: [...viewGenerator.stmts],
+          templateStmts: [...viewGenerator.templateStmts]
+        });
+
+        this.slot++
+
+      }
+    }
+
     const functionName = "Template_For_" + index + "_Tag";
     const viewGenerator = new ViewGenerator();
+    viewGenerator.slot = this.slot;
     viewGenerator.setImplicitVariables(iterableIdentifier, this.implicitVariables);
     viewGenerator.processChildren(node.children);
 
     const repeaterCreateNode = ts.factory.createExpressionStatement(
         ts.factory.createCallExpression(
             ts.factory.createPropertyAccessExpression(
-                ts.factory.createIdentifier("i0"),
-                ts.factory.createIdentifier("ɵɵrepeaterCreate")
+                ts.factory.createIdentifier(i0),
+                ts.factory.createIdentifier(ɵɵrepeaterCreate)
             ), undefined,
             [
               ts.factory.createNumericLiteral(index),
               ts.factory.createIdentifier(functionName),
-                ts.factory.createNumericLiteral(0),
               ts.factory.createNumericLiteral(0),
-                ts.factory.createStringLiteral(node.tagName)
+              ts.factory.createNumericLiteral(0),
+              ts.factory.createStringLiteral(node.tagName),
+              ts.factory.createNull(),
+              ts.factory.createNull(),
+              ts.factory.createNull(),
+              emptyTemplateFnName ? ts.factory.createIdentifier(emptyTemplateFnName) : ts.factory.createNull(),
             ]
         )
     );
@@ -483,11 +534,11 @@ export class ViewGenerator {
     const exprParser = new ExpressionParser();
     const exprParserSourceFile = exprParser.parse(iterable, this.implicitVariables);
 
-    const updateRepeaterNode =  ts.factory.createExpressionStatement(
+    const updateRepeaterNode = ts.factory.createExpressionStatement(
         ts.factory.createCallExpression(
             ts.factory.createPropertyAccessExpression(
                 ts.factory.createIdentifier(i0),
-                ts.factory.createIdentifier("ɵɵrepeater")
+                ts.factory.createIdentifier(ɵɵrepeater)
             ),
             undefined,
             [
@@ -509,6 +560,16 @@ export class ViewGenerator {
     });
 
     return {creation: "", update: ""};
+
+  }
+
+  private processNgEmpty(ngForSibling: Element) {
+
+    const viewGenerator = new ViewGenerator();
+    viewGenerator.slot = this.slot;
+    viewGenerator.processChildren(ngForSibling.children);
+
+    return viewGenerator
 
   }
 
@@ -877,6 +938,93 @@ function generateConditionalNode(conditionals: any[], containerIndex: number) {
           ]
       )
   );
+}
+
+function findNgForEmpty(node: Element) {
+  let current = node.next;
+
+  while (current) {
+
+    // 1️⃣ Skip empty text nodes
+    if (current.type === ElementType.Text) {
+      const text = current.data.trim();
+
+      if (text === "") {
+        current = current.next;
+        continue;
+      }
+
+      // Non-empty text → error
+      throw new Error(
+          "Non-empty text is not allowed between <ng-for> and <ng-for-empty>."
+      );
+    }
+
+    // 2️⃣ If element
+    if (current.type === ElementType.Tag) {
+
+      if (current.tagName === "ng-for-empty") {
+        return current; // ✅ valid
+      }
+
+      // Some other element → error
+      throw new Error(
+          `<ng-for-empty> must appear immediately after <ng-for>. Found <${current.tagName}> instead.`
+      );
+    }
+
+    // 3️⃣ Any other node type → error
+    throw new Error(
+        "Invalid node between <ng-for> and <ng-for-empty>."
+    );
+  }
+
+  return null; // no ng-for-empty (optional case)
+}
+
+function getNgForEmptySibling(node: Node): Element | null {
+  let current = node.next;
+
+  while (current) {
+
+    console.log(current.type, (current as Element).name)
+
+    // Skip whitespace-only text nodes
+    if (current.type === ElementType.Text) {
+      const textNode = current;
+
+      if (textNode.data.trim() === "") {
+        current = current.next;
+        continue;
+      }
+
+    }
+
+    // If tag node
+    if (current.type === ElementType.Tag) {
+      const element = current as Element;
+
+      if (element.name === "ng-for-empty") {
+        return element; // ✅ Found valid sibling
+      } else {
+        return null
+      }
+
+    }
+
+    // Ignore comments
+    if (current.type === ElementType.Comment) {
+      current = current.next;
+      continue
+    }
+
+    if (!current) {
+      return null;
+    }
+
+  }
+
+  return null;
 }
 
 function buildIfElseChain(conditionals: any[]): ts.Statement {
