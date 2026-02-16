@@ -607,7 +607,7 @@ export class ViewGenerator {
   }
 
   setImplicitVariables(variableName: string, parentImplicitVariables: string[]) {
-    this.implicitVariables.push(...parentImplicitVariables);
+    this.implicitVariables.push(parentImplicitVariables);
     this.implicitVariables.push(variableName);
   }
 
