@@ -52,7 +52,7 @@ export function replaceCustomDirectivesAndPipes(html: string){
     html = html.replace(/@default\s*\{([^}]*)\}/g, '<ng-default>$1</ng-default>');
 
     // Replace pipes in interpolations
-    // html = replacePipesInInterpolations(html);
+    html = replacePipesInInterpolations(html);
 
     return html;
 }
