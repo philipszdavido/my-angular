@@ -1,4 +1,5 @@
 import * as ts from 'typescript';
+import {i0, ɵɵelementEnd} from "../constants/constants";
 
 function visitCallExpressionArguments(node: ts.CallExpression) {
     return node.arguments.map(arg => {
@@ -27,14 +28,28 @@ export function createTransformer(ctxVariable: string, implicitVariables: string
 
             if(ts.isIdentifier(node)) {
 
-                if (implicitVariables.includes(node.text)) {
-                    return ts.factory.createPropertyAccessExpression(
-                        ts.factory.createPropertyAccessExpression(
+                if (implicitVariables.flat(Infinity).includes(node.text)) {
+                    const currentImplicit = implicitVariables[1];
+                    const parentImplicits = implicitVariables[0] ?? [];
+
+                    if (node.text === currentImplicit) {
+                        return ts.factory.createPropertyAccessExpression(
                             ts.factory.createIdentifier(ctxVariable),
                             ts.factory.createIdentifier("$implicit")
-                        ),
-                        node,
-                    )
+                        );
+                    }
+
+                    if ((parentImplicits as any[]).flat(Infinity).includes(node.text)) {
+                        return generateNextContextNode(getContextLevel(parentImplicits as any[], node.text));
+                    }
+
+                    // return ts.factory.createPropertyAccessExpression(
+                    //     ts.factory.createPropertyAccessExpression(
+                    //         ts.factory.createIdentifier(ctxVariable),
+                    //         ts.factory.createIdentifier("$implicit")
+                    //     ),
+                    //     node,
+                    // )
                 }
 
                 return ts.factory.createPropertyAccessExpression(
@@ -57,18 +72,26 @@ export function createTransformer(ctxVariable: string, implicitVariables: string
             }
 
             if (ts.isPropertyAccessExpression(node)) {
+
+                const currentImplicit = implicitVariables[1];
+                const parentImplicits = (implicitVariables[0] ?? []) as any[];
+
                 const root = getRootIdentifier(node);
 
                 if (!root) return node;
 
-                const isImplicit = implicitVariables.includes(root.text);
+                let base
 
-                const base = isImplicit
-                    ? ts.factory.createPropertyAccessExpression(
-                        ts.factory.createIdentifier(ctxVariable),
-                        "$implicit"
-                    )
-                    : ts.factory.createIdentifier(ctxVariable);
+                if (currentImplicit == root.text) {
+
+                    base = ts.factory.createPropertyAccessExpression(
+                            ts.factory.createIdentifier(ctxVariable),
+                            "$implicit"
+                        )
+
+                } else if (parentImplicits.flat(Infinity).includes(root.text)) {
+                    base = generateNextContextNode(getContextLevel(parentImplicits as any[], root.text));
+                }
 
                 return rebuildWithNewRoot(node, base);
             }
@@ -137,6 +160,68 @@ export function createTransformer(ctxVariable: string, implicitVariables: string
 
         return (node: ts.Node) => ts.visitNode(node, visitor);
     };
+}
+
+function generateNextContextNode(level: number) {
+    return ts.factory.createPropertyAccessExpression(
+        ts.factory.createCallExpression(
+            ts.factory.createPropertyAccessExpression(
+                ts.factory.createIdentifier(i0),
+                ts.factory.createIdentifier("ɵɵnextContext")
+            ),
+            undefined,
+            [
+                ts.factory.createNumericLiteral(level),
+            ]
+        ),
+        ts.factory.createIdentifier("$implicit")
+    );
+}
+
+// function generateNextContextNode(level: number) {
+//     console.log(level)
+//     return ts.factory.createExpressionStatement(
+//         ts.factory.createPropertyAccessExpression(
+//         ts.factory.createCallExpression(
+//             ts.factory.createPropertyAccessExpression(
+//                 ts.factory.createIdentifier(i0),
+//                 ts.factory.createIdentifier("ɵɵnextContext")
+//             ),
+//             undefined,
+//             [
+//                 ts.factory.createNumericLiteral(level),
+//             ]
+//         ),
+//             "$implicit"
+//     )
+//     );
+// }
+
+function getContextLevel(
+    implicitVariables: any[],
+    variableText: string
+): number {
+
+    if (!implicitVariables) return -1;
+
+    const current = implicitVariables[1];
+    const parent = implicitVariables[0];
+
+    // Found at current level
+    if (current === variableText) {
+        return 0;
+    }
+
+    // Search parent recursively
+    if (Array.isArray(parent)) {
+        const parentLevel = getContextLevel(parent, variableText);
+
+        if (parentLevel !== -1) {
+            return parentLevel + 1;
+        }
+    }
+
+    return -1;
 }
 
 // Helper function to check if a node is a property name
