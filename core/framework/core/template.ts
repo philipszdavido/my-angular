@@ -1,7 +1,8 @@
-import {enterView, leaveView, LView, runtime, TNode, TNodeType, TView, TViewType} from "./core";
+import {enterView, leaveView, LView, runtime, TNode, TNodeType, TView, TViewType, UPDATE} from "./core";
 import {appendChild, createTNode} from "./element";
-import {createLView, setCurrentTNode} from "./state";
+import {createLView, getLView, getSelectedIndex, getTView, setCurrentTNode} from "./state";
 import {RenderFlags} from "./render_flags";
+import {cloneObject} from "./utils";
 
 export function ɵɵtemplate<T>(
     index: number,
@@ -11,7 +12,7 @@ export function ɵɵtemplate<T>(
     attrsIndex?: number
 ) {
 
-    const declarationLView = runtime.currentLView
+    const declarationLView = getLView()
     const declarationTView = declarationLView.tView;
     // create TView
 
@@ -24,7 +25,7 @@ export function ɵɵtemplate<T>(
         styles: [''],
         inputs: null,
         outputs: null,
-        id: index.toString(),
+        id: declarationTView.id, // index.toString(),
         type: TViewType.Embedded,
         data: []
     }
@@ -63,7 +64,7 @@ export function ɵɵconditional<T>(containerIndex: number, containerEndIndex: nu
 
     if (matchingTemplateIndex !== -1) {
 
-        const lView = runtime.currentLView
+        const lView = getLView()
         const tNode = lView.tView.data[matchingTemplateIndex] as TNode;
         const comment = lView.data[matchingTemplateIndex];
         const embeddedTView = tNode.tView
@@ -117,13 +118,7 @@ function clearContainer(templateLView: LView) {
     }
 }
 
-export function ɵɵrepeater(iterable: Array<any>) {
-
-}
-
-export function ɵɵpipeBind1() {}
-
-export function ɵɵrepeaterCreate(
+export function ɵɵrepeaterCreate<T>(
     index: number,
     templateFn: () => void,
     decls: number,
@@ -138,4 +133,98 @@ export function ɵɵrepeaterCreate(
     emptyTagName?: string | null,
     emptyAttrsIndex?: number | null): void {
 
+    const lView = getLView()
+    const tView = getTView()
+    // create TView
+
+    const embeddedTView: TView = {
+        blueprint: new Array(9).fill(null),
+        firstCreatePass: true,
+        template: templateFn,
+        directiveRegistry: tView.directiveRegistry,
+        consts: null,
+        styles: [''],
+        inputs: null,
+        outputs: null,
+        id: tView.id,
+        type: TViewType.Embedded,
+        data: []
+    }
+
+    const parentTNode = runtime.isParent ? runtime.currentTNode : runtime.currentTNode.parent
+    const tNode: TNode = createTNode(index, tagName, TNodeType.Container, embeddedTView, parentTNode);
+    tView.data[index] = tNode;
+
+    // create comment
+    const comment = document.createComment(tagName)
+    lView.data[index] = comment;
+    // set node in runtime
+
+    setCurrentTNode(tNode, false)
+
+    const context = lView.context;
+
+    const embeddedLView = createLView<T>(
+        lView,
+        embeddedTView,
+        context,
+        null,
+        tNode
+    );
+
+    lView.instances[index] = embeddedLView;
+
+    appendChild(comment, lView, tView, tNode.parent);
+
 }
+
+export function ɵɵrepeater(iterable: Array<any>) {
+    const hostLView = getLView();
+    const metadataSlotIdx = getSelectedIndex();
+
+    const hostTView = hostLView.tView;
+    const metadata = hostLView[metadataSlotIdx];
+    const containerIndex = metadataSlotIdx + 1;
+
+    const currentLView = hostLView.instances[metadataSlotIdx]
+
+    if (currentLView) {
+        clearContainer(currentLView);
+    }
+
+    // get and call the template
+    const tNode = hostLView.tView.data[metadataSlotIdx] as TNode;
+    const templateFn = tNode.tView.template;
+    const comment = hostLView.data[metadataSlotIdx];
+    const embeddedTView = tNode.tView
+
+    iterable.forEach((el, i) => {
+
+        const context = cloneObject(hostLView.context);
+        context.$implicit = el;
+
+        // we will need to create an embedded LView which will pass to enterView
+        const embeddedLView = createLView(
+            hostLView,
+            embeddedTView,
+            context,
+            null,
+            tNode
+        );
+
+        embeddedLView.host = comment;
+        hostLView.instances[metadataSlotIdx] = embeddedLView;
+
+        enterView(embeddedLView)
+
+        templateFn(context, RenderFlags.CREATE);
+        templateFn(context, RenderFlags.UPDATE);
+
+        leaveView()
+
+
+    })
+
+}
+
+export function ɵɵpipeBind1() {}
