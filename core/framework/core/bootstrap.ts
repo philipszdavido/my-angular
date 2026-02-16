@@ -2,34 +2,17 @@ import {LView, enterView, leaveView, CREATE, UPDATE} from "./core";
 import { DefaultDomRenderer2 } from "./browser";
 import { setupZone } from "./zone";
 
-/**
- * Locates the host native element, used for bootstrapping existing nodes into rendering pipeline.
- *
- * @param renderer the renderer used to locate the element.
- * @param elementOrSelector Render element or CSS selector to locate the element.
- * @param encapsulation View Encapsulation defined for component that requests host element.
- * @param injector Root view injector instance.
- */
 function locateHostElement(
   renderer,
   elementOrSelector,
   encapsulation,
   injector,
 ) {
-  // Note: we use default value for the `PRESERVE_HOST_CONTENT` here even though it's a
-  // tree-shakable one (providedIn:'root'). This code path can be triggered during dynamic
-  // component creation (after calling ViewContainerRef.createComponent) when an injector
-  // instance can be provided. The injector instance might be disconnected from the main DI
-  // tree, thus the `PRESERVE_HOST_CONTENT` would not be able to instantiate. In this case, the
-  // default value will be used.
-  // When using native Shadow DOM, do not clear host element to allow native slot
-  // projection.
   const preserveContent = true;
   const rootElement = renderer.selectRootElement(
     elementOrSelector,
     preserveContent,
   );
-  // applyRootElementTransform(rootElement);
   return rootElement;
 }
 

@@ -14,24 +14,11 @@ export class DefaultDomRenderer2 {
   constructor(doc) {
     this.doc = doc;
     this.data = Object.create(null);
-    /**
-     * By default this renderer throws when encountering synthetic properties
-     * This can be disabled for example by the AsyncAnimationRendererFactory
-     */
   }
 
   destroy() {}
   createElement(name, namespace) {
     if (namespace) {
-      // TODO: `|| namespace` was added in
-      // https://github.com/angular/angular/commit/2b9cc8503d48173492c29f5a271b61126104fbdb to
-      // support how Ivy passed around the namespace URI rather than short name at the time. It did
-      // not, however extend the support to other parts of the system (setAttribute, setAttribute,
-      // and the ServerRenderer). We should decide what exactly the semantics for dealing with
-      // namespaces should be and make it consistent.
-      // Related issues:
-      // https://github.com/angular/angular/issues/44028
-      // https://github.com/angular/angular/issues/44883
       return this.doc.createElementNS(
         NAMESPACE_URIS[namespace] || namespace,
         name,
