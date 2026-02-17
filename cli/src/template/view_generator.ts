@@ -1,6 +1,6 @@
 import {parseDocument} from "htmlparser2";
 import {Element, Node, Text} from "domhandler";
-import {factory} from "typescript";
+import {factory, SourceFile} from "typescript";
 import {ExpressionParser} from "../expr_parser/expr_parser";
 import {RenderFlags} from "../render/flags";
 import {AttributeMarker} from "./attribute_marker";
@@ -23,6 +23,7 @@ import {CSSParser} from "../css_parser/css_parser";
 import {ElementType} from "domelementtype";
 import {replaceCustomDirectivesAndPipes} from "../expr_parser/html_string_to_template_ast";
 import ts = require("typescript");
+import {ChildNode} from "postcss";
 
 export interface ViewGeneratorOptions {
   // Add any configuration options here
@@ -33,7 +34,7 @@ type InterpolationType = {
   content: string
 }
 
-const templatesNodeNames = ["ng-if", "ng-for", /*"ng-else", "ng-else-if",*/ /* "ng-empty", "ng-case", */ "ng-switch" /*, "ng-default"*/, "ng-while", "ng-template"]
+const templatesNodeNames = ["ng-if", "ng-for", /*"ng-else", "ng-else-if",*/ /* "ng-empty", "ng-case", */ "ng-switch" /*, "ng-default"*/, "ng-while", "ng-template", "ng-for-empty"]
 const SVG_TAG_REWRITE: Record<string, string> = {
   clippath: 'clipPath',
   lineargradient: 'linearGradient',
@@ -56,7 +57,9 @@ export class ViewGenerator {
   private readonly templateStmts: Template[] = []
   private readonly consts: ts.Expression[] = [];
   private slot = 0;
+  private index = 0;
   private readonly implicitVariables = []
+  private skipNode: number  = -1;
 
   constructor(options: ViewGeneratorOptions = {}) {
     this.options = options;
@@ -73,9 +76,15 @@ export class ViewGenerator {
     let creationCode = "";
     let updateCode = "";
 
-    for (let index = 0; index < nodes.length; index++) {
-      const node = nodes[index];
-      const { creation, update } = this.processNode(node, index);
+    for (; this.index < nodes.length; this.index++) {
+      const node = nodes[this.index];
+
+      if (node.type === ElementType.Comment) continue
+
+      if (this.skipNode === this.index) { this.skipNode = -1; continue; }
+
+      const { creation, update } = this.processNode(node, this.index);
+
       creationCode += creation;
       updateCode += update;
     }
@@ -423,18 +432,38 @@ export class ViewGenerator {
   }
 
   processChildNodes(node: Element) {
-    node.childNodes.forEach((childNode, index) => {
+
+    this.index = 0
+
+    for (; this.index < node.childNodes.length; this.index++) {
+      const childNode = node.childNodes[this.index];
+      const index = this.index;
+
+      if (childNode.type === ElementType.Comment) continue
+
       this.processNode(childNode, index)
-    })
+
+    }
+
   }
 
   processChildren(nodes: Node[]) {
-    nodes.forEach((childNode, index) => {
+
+    this.index = 0
+
+    for (; this.index < nodes.length; this.index++) {
+      const childNode = nodes[this.index];
+      const index = this.index;
+
+      if (childNode.type === ElementType.Comment) continue
+
       this.processNode(childNode, index)
-    })
+
+    }
+
   }
 
-  private processNgFor(node: Element, index: number) {
+  private processNgFor(node: Element, slotIndex: number) {
     // item="user" of="users" trackBy="id"
     // decls="arr of prim; track $index; let last = $last"
 
@@ -454,11 +483,11 @@ export class ViewGenerator {
       const parts = node.attribs["decls"].split(";");
       parts.forEach((part, index) => {
 
-        if (part?.split(' ')?.[1] === 'of') {
+        if (part?.split(' ')?.[1] === 'of' && part?.split(' ')?.length === 3) {
 
           const iterableParts = part.split(' ');
           iterableIdentifier = iterableParts[0];
-          iterable = iterableParts[1];
+          iterable = iterableParts[2];
 
         } else if (part?.trim()?.split(' ')?.[0] === "track") {
           trackBy = part?.trim()?.split(' ')?.[1]
@@ -481,15 +510,15 @@ export class ViewGenerator {
 
     }
 
-    const ngForSibling = getNgForEmptySibling(node)
+    const ngForSibling = getNgForEmptySibling(node, this.index)
 
     if (ngForSibling) {
-      if (ngForSibling.type === ElementType.Tag && ngForSibling.tagName === 'ng-for-empty') {
+      if (ngForSibling.element.type === ElementType.Tag && ngForSibling.element.tagName === 'ng-for-empty') {
 
-        const ngForEmptyIndex = index;
+        const ngForEmptyIndex = slotIndex;
         emptyTemplateFnName = "Template_For_Empty_" + ngForEmptyIndex + "_For"
 
-        const viewGenerator = this.processNgEmpty(ngForSibling);
+        const viewGenerator = this.processNgEmpty(ngForSibling.element);
 
         this.templateStmts.push({
           functionName: emptyTemplateFnName,
@@ -498,59 +527,27 @@ export class ViewGenerator {
           templateStmts: [...viewGenerator.templateStmts]
         });
 
-        this.slot++
+        this.slot++;
+        this.skipNode = ngForSibling.indx;
+        this.index = ngForSibling.indx;
 
       }
     }
 
-    const functionName = "Template_For_" + index + "_Tag";
+    const functionName = "Template_For_" + slotIndex + "_Tag";
     const viewGenerator = new ViewGenerator();
     viewGenerator.slot = this.slot;
     viewGenerator.setImplicitVariables(iterableIdentifier, this.implicitVariables);
     viewGenerator.processChildren(node.children);
 
-    const repeaterCreateNode = ts.factory.createExpressionStatement(
-        ts.factory.createCallExpression(
-            ts.factory.createPropertyAccessExpression(
-                ts.factory.createIdentifier(i0),
-                ts.factory.createIdentifier(ɵɵrepeaterCreate)
-            ), undefined,
-            [
-              ts.factory.createNumericLiteral(index),
-              ts.factory.createIdentifier(functionName),
-              ts.factory.createNumericLiteral(0),
-              ts.factory.createNumericLiteral(0),
-              ts.factory.createStringLiteral(node.tagName),
-              ts.factory.createNull(),
-              ts.factory.createNull(), // trackByFn
-              ts.factory.createNull(),
-              emptyTemplateFnName ? ts.factory.createIdentifier(emptyTemplateFnName) : ts.factory.createNull(),
-              ts.factory.createNull(),
-              ts.factory.createNull(),
-              emptyTemplateFnName ? ts.factory.createStringLiteral("ng-for-empty") : ts.factory.createNull(),
-              ts.factory.createNull(),
-            ]
-        )
-    );
+    const repeaterCreateNode = generateRepeaterCreateNode(node, slotIndex, functionName, emptyTemplateFnName);
 
-    this.updateStmts.push(generateAdvanceNode(index.toString()))
+    this.updateStmts.push(generateAdvanceNode(slotIndex.toString()))
 
     const exprParser = new ExpressionParser();
     const exprParserSourceFile = exprParser.parse(iterable, this.implicitVariables);
 
-    const updateRepeaterNode = ts.factory.createExpressionStatement(
-        ts.factory.createCallExpression(
-            ts.factory.createPropertyAccessExpression(
-                ts.factory.createIdentifier(i0),
-                ts.factory.createIdentifier(ɵɵrepeater)
-            ),
-            undefined,
-            [
-              // @ts-ignore
-              exprParserSourceFile.statements[0].expression
-            ]
-        )
-    )
+    const updateRepeaterNode = generateUpdateRepeaterNode(exprParserSourceFile)
 
     this.stmts.push(repeaterCreateNode);
 
@@ -562,8 +559,6 @@ export class ViewGenerator {
       stmts: [...viewGenerator.stmts],
       templateStmts: [...viewGenerator.templateStmts]
     });
-
-    this.slot++
 
     return {creation: "", update: ""};
 
@@ -946,6 +941,48 @@ function generateConditionalNode(conditionals: any[], containerIndex: number) {
   );
 }
 
+function generateRepeaterCreateNode(node: Element, slotIndex: number, functionName: string, emptyTemplateFnName: string) {
+  return ts.factory.createExpressionStatement(
+      ts.factory.createCallExpression(
+          ts.factory.createPropertyAccessExpression(
+              ts.factory.createIdentifier(i0),
+              ts.factory.createIdentifier(ɵɵrepeaterCreate)
+          ), undefined,
+          [
+            ts.factory.createNumericLiteral(slotIndex),
+            ts.factory.createIdentifier(functionName),
+            ts.factory.createNumericLiteral(0),
+            ts.factory.createNumericLiteral(0),
+            ts.factory.createStringLiteral(node.tagName),
+            ts.factory.createNull(),
+            ts.factory.createNull(), // trackByFn
+            ts.factory.createNull(),
+            emptyTemplateFnName ? ts.factory.createIdentifier(emptyTemplateFnName) : ts.factory.createNull(),
+            ts.factory.createNull(),
+            ts.factory.createNull(),
+            emptyTemplateFnName ? ts.factory.createStringLiteral("ng-for-empty") : ts.factory.createNull(),
+            ts.factory.createNull(),
+          ]
+      )
+  )
+}
+
+function generateUpdateRepeaterNode(exprParserSourceFile: SourceFile) {
+  return ts.factory.createExpressionStatement(
+      ts.factory.createCallExpression(
+          ts.factory.createPropertyAccessExpression(
+              ts.factory.createIdentifier(i0),
+              ts.factory.createIdentifier(ɵɵrepeater)
+          ),
+          undefined,
+          [
+            // @ts-ignore
+            exprParserSourceFile.statements[0].expression
+          ]
+      )
+  )
+}
+
 function findNgForEmpty(node: Element) {
   let current = node.next;
 
@@ -988,12 +1025,11 @@ function findNgForEmpty(node: Element) {
   return null; // no ng-for-empty (optional case)
 }
 
-function getNgForEmptySibling(node: Node): Element | null {
+function getNgForEmptySibling(node: Node, currentIndex: number): { element: Element; indx: number } | null {
   let current = node.next;
+  let indx = currentIndex + 1
 
   while (current) {
-
-    console.log(current.type, (current as Element).name)
 
     // Skip whitespace-only text nodes
     if (current.type === ElementType.Text) {
@@ -1001,6 +1037,7 @@ function getNgForEmptySibling(node: Node): Element | null {
 
       if (textNode.data.trim() === "") {
         current = current.next;
+        indx++;
         continue;
       }
 
@@ -1011,7 +1048,8 @@ function getNgForEmptySibling(node: Node): Element | null {
       const element = current as Element;
 
       if (element.name === "ng-for-empty") {
-        return element; // ✅ Found valid sibling
+        indx++;
+        return { element, indx };
       } else {
         return null
       }
@@ -1021,6 +1059,7 @@ function getNgForEmptySibling(node: Node): Element | null {
     // Ignore comments
     if (current.type === ElementType.Comment) {
       current = current.next;
+      indx++;
       continue
     }
 
