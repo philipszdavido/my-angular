@@ -135,17 +135,78 @@ export function ɵɵrepeaterCreate<T>(
 
     const lView = getLView()
     const tView = getTView()
-    // create TView
 
+    const forIndex = index;
+    const emptyIndex = index + 1
+
+    // create TView
     const embeddedTView: TView = {
         blueprint: new Array(9).fill(null),
         firstCreatePass: true,
         template: templateFn,
         directiveRegistry: tView.directiveRegistry,
-        consts: null,
-        styles: [''],
-        inputs: null,
-        outputs: null,
+        consts: tView.consts,
+        styles: tView.styles,
+        inputs: tView.inputs,
+        outputs: tView.outputs,
+        id: tView.id,
+        type: TViewType.Embedded,
+        data: []
+    }
+
+    const parentTNode = runtime.isParent ? runtime.currentTNode : runtime.currentTNode.parent
+    const tNode: TNode = createTNode(forIndex, tagName, TNodeType.Container, embeddedTView, parentTNode);
+    tView.data[forIndex] = tNode;
+
+    // create comment
+    const comment = document.createComment(tagName)
+    lView.data[forIndex] = comment;
+    // set node in runtime
+
+    setCurrentTNode(tNode, false)
+
+    const context = lView.context;
+
+    const embeddedLView = createLView<T>(
+        lView,
+        embeddedTView,
+        context,
+        null,
+        tNode
+    );
+    embeddedLView.context_value = {
+        hasEmptyBlock: !!emptyTemplateFn,
+        trackByFn
+    }
+
+    lView.instances[forIndex] = embeddedLView;
+
+    appendChild(comment, lView, tView, tNode.parent);
+
+    if (emptyTemplateFn) {
+        repeaterForEmpty(lView, tView, emptyIndex, emptyTagName, emptyTemplateFn)
+    }
+
+}
+
+function repeaterForEmpty<T>(
+    lView: LView,
+    tView: TView,
+    index: number,
+    tagName: string | null,
+    templateFn: () => void,
+) {
+
+    // create TView
+    const embeddedTView: TView = {
+        blueprint: new Array(9).fill(null),
+        firstCreatePass: true,
+        template: templateFn,
+        directiveRegistry: tView.directiveRegistry,
+        consts: tView.consts,
+        styles: tView.styles,
+        inputs: tView.inputs,
+        outputs: tView.outputs,
         id: tView.id,
         type: TViewType.Embedded,
         data: []
@@ -197,6 +258,30 @@ export function ɵɵrepeater(iterable: Array<any>) {
     const templateFn = tNode.tView.template;
     const comment = hostLView.data[metadataSlotIdx];
     const embeddedTView = tNode.tView
+
+    clearContainer(currentLView)
+
+    if (!iterable || iterable.length == 0) {
+        // get the context_value
+        const ctx_value = currentLView.context_value
+
+        if (ctx_value && ctx_value.hasEmptyBlock) {
+
+            const emptyBlockLView = hostLView.instances[metadataSlotIdx + 1]
+            const emptyBlockTView = emptyBlockLView.tView;
+            const emptyBlockTemplateFn = emptyBlockTView.template
+            clearContainer(emptyBlockLView);
+
+            enterView(emptyBlockLView)
+
+            emptyBlockTemplateFn(context, RenderFlags.CREATE);
+            emptyBlockTemplateFn(context, RenderFlags.UPDATE);
+
+            leaveView()
+
+        }
+
+    }
 
     iterable.forEach((el, i) => {
 
