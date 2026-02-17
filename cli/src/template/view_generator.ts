@@ -206,21 +206,31 @@ export class ViewGenerator {
 
     // Process children
     let childIndex = index + 1;
-    element.childNodes.forEach((childNode, idx) => {
+    // element.childNodes.forEach((childNode, idx) => {
+    //
+    //   if (tag === "style") {
+    //     const cssParser = new CSSParser();
+    //     (childNode as Text).data = cssParser.parsePostCSS((childNode as Text).data.trim())
+    //   }
+    //
+    //   const { creation: childCreation, update: childUpdate } = this.processNode(
+    //     childNode,
+    //     childIndex + idx
+    //   );
+    //   creation += childCreation;
+    //   update += childUpdate;
+    //   childIndex += idx + 1;
+    // });
 
-      if (tag === "style") {
-        const cssParser = new CSSParser();
-        (childNode as Text).data = cssParser.parsePostCSS((childNode as Text).data.trim())
-      }
+    const viewGenerator = new ViewGenerator();
+    viewGenerator.slot = this.slot;
+    viewGenerator.implicitVariables.push(...this.implicitVariables);
+    viewGenerator.processChildNodes(element);
 
-      const { creation: childCreation, update: childUpdate } = this.processNode(
-        childNode,
-        childIndex + idx
-      );
-      creation += childCreation;
-      update += childUpdate;
-      childIndex += idx + 1;
-    });
+    this.stmts.push(...viewGenerator.stmts);
+    this.updateStmts.push(...viewGenerator.updateStmts);
+    this.templateStmts.push(...viewGenerator.templateStmts);
+    this.consts.push(...viewGenerator.consts);
 
     creation += `i0.ɵɵelementEnd();\n`;
     this.stmts.push(generateElementEndNode());
@@ -232,6 +242,16 @@ export class ViewGenerator {
     textNode: Text,
     index: number
   ): { creation: string; update: string } {
+
+    const parentElement = textNode.prev as Element;
+
+    if (parentElement instanceof Element) {
+      if (parentElement.type === ElementType.Style) {
+        const cssParser = new CSSParser();
+        (textNode as Text).data = cssParser.parsePostCSS((textNode as Text).data.trim())
+      }
+    }
+
     const text = textNode.data.trim();
     if (text) {
       const matches = text.match(/{{(.*?)}}/);
@@ -536,7 +556,7 @@ export class ViewGenerator {
 
     const functionName = "Template_For_" + slotIndex + "_Tag";
     const viewGenerator = new ViewGenerator();
-    viewGenerator.slot = this.slot;
+    // viewGenerator.slot = this.slot;
     viewGenerator.setImplicitVariables(iterableIdentifier, this.implicitVariables);
     viewGenerator.processChildren(node.children);
 
@@ -567,7 +587,7 @@ export class ViewGenerator {
   private processNgEmpty(ngForSibling: Element) {
 
     const viewGenerator = new ViewGenerator();
-    viewGenerator.slot = this.slot;
+    // viewGenerator.slot = this.slot;
     viewGenerator.processChildren(ngForSibling.children);
 
     return viewGenerator
@@ -673,6 +693,9 @@ export class ViewGenerator {
     this.implicitVariables.push(variableName);
   }
 
+  private setIndex(index: number) {
+    this.index = index;
+  }
 }
 
 function generateElementStartNode(
