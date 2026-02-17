@@ -175,7 +175,7 @@ export type TView = {
   data: TData;
 };
 
-export type LView = {
+export interface LView {
   tView: TView;
   data: Element[]; // array of child HTMLElement | Text nodes
   instances: LView[]; // array of child LViews
@@ -185,7 +185,7 @@ export type LView = {
 
   context_value: any | null;
   queries: LQueries
-};
+}
 
 export type TNode = {
   type: TNodeType;
@@ -195,10 +195,7 @@ export type TNode = {
   parent: TNode | null;
 };
 
-export type LContainer = {
-  tView: TView;
-  host: Element;
-};
+export interface LContainer extends LView {}
 
 export interface ComponentDefinition<T> {
   type: Type<T>;
