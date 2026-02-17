@@ -267,12 +267,28 @@ export function ɵɵrepeater(iterable: Array<any>) {
 
         if (ctx_value && ctx_value.hasEmptyBlock) {
 
+            const context = hostLView.context;
+
             const emptyBlockLView = hostLView.instances[metadataSlotIdx + 1]
             const emptyBlockTView = emptyBlockLView.tView;
             const emptyBlockTemplateFn = emptyBlockTView.template
+            const comment = hostLView.data[metadataSlotIdx + 1];
+            const tNode = hostLView.tView.data[metadataSlotIdx + 1] as TNode;
+
             clearContainer(emptyBlockLView);
 
-            enterView(emptyBlockLView)
+            const embeddedLView = createLView(
+                hostLView,
+                emptyBlockTView,
+                context,
+                null,
+                tNode
+            );
+
+            embeddedLView.host = comment;
+            hostLView.instances[metadataSlotIdx + 1] = embeddedLView;
+
+            enterView(embeddedLView)
 
             emptyBlockTemplateFn(context, RenderFlags.CREATE);
             emptyBlockTemplateFn(context, RenderFlags.UPDATE);
