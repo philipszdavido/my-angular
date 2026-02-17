@@ -522,9 +522,13 @@ export class ViewGenerator {
               ts.factory.createNumericLiteral(0),
               ts.factory.createStringLiteral(node.tagName),
               ts.factory.createNull(),
-              ts.factory.createNull(),
+              ts.factory.createNull(), // trackByFn
               ts.factory.createNull(),
               emptyTemplateFnName ? ts.factory.createIdentifier(emptyTemplateFnName) : ts.factory.createNull(),
+              ts.factory.createNull(),
+              ts.factory.createNull(),
+              emptyTemplateFnName ? ts.factory.createStringLiteral("ng-for-empty") : ts.factory.createNull(),
+              ts.factory.createNull(),
             ]
         )
     );
@@ -558,6 +562,8 @@ export class ViewGenerator {
       stmts: [...viewGenerator.stmts],
       templateStmts: [...viewGenerator.templateStmts]
     });
+
+    this.slot++
 
     return {creation: "", update: ""};
 
