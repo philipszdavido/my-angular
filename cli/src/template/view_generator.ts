@@ -55,7 +55,7 @@ export class ViewGenerator {
   private readonly stmts: ts.ExpressionStatement[] = [];
   private readonly updateStmts: ts.ExpressionStatement[] = [];
   private readonly templateStmts: Template[] = []
-  private readonly consts: ts.Expression[] = [];
+  private consts: ts.Expression[] = [];
   private slot = 0;
   private index = 0;
   private readonly implicitVariables = []
@@ -129,8 +129,6 @@ export class ViewGenerator {
   ): { creation: string; update: string, attrArray: string[] } {
     const tag =  this.rewriteTagExactDomName(element.tagName);
     const attributes = element.attribs;
-    let creation = `i0.ɵɵelementStart(${index}, "${tag}"`;
-    let update = "";
     const attrArray = [];
     let attrIndex;
 
@@ -142,21 +140,16 @@ export class ViewGenerator {
       if (attr.startsWith("(")) {
         // Event binding
         const eventName = attr.slice(1, -1);
-        creation += `, ${index + 1}`;
-
-        creation += `);\ni0.ɵɵlistener("${eventName}", function ${tag}_Template_${eventName}_${index}_listener() { return ctx.${attributes[attr]}(); })`;
         tempStmts.push(
             generateListenerNode(eventName, tag, index + 1, attributes[attr])
         )
       } else if (attr.startsWith("[")) {
         // Property binding
         const propertyName = attr.slice(1, -1);
-        creation += `, ${index + 1}`;
 
         this.updateStmts.push(generateAdvanceNode(index.toString()));
         this.updateStmts.push(generatePropertyNode(propertyName, attributes[attr], this.implicitVariables));
 
-        update += `i0.ɵɵproperty("${propertyName}", ctx.${attributes[attr]});\n`;
       } else {
         attrArray.push(`"${attr}", "${attributes[attr]}"`);
 
@@ -197,11 +190,6 @@ export class ViewGenerator {
         )
     )
 
-    if (attrArray.length > 0) {
-      creation += `, ${attrArray.join(", ")}`;
-    }
-    creation += `);\n`;
-
     this.stmts.push(generateElementStartNode(index, tag, /* Object.keys(attributes).length == 0 ? null : index + 1,*/ attrIndex), ...tempStmts);
 
     // Process children
@@ -225,17 +213,18 @@ export class ViewGenerator {
     const viewGenerator = new ViewGenerator();
     viewGenerator.slot = this.slot;
     viewGenerator.implicitVariables.push(...this.implicitVariables);
+    viewGenerator.consts = [...this.consts]
+    this.consts = []
     viewGenerator.processChildNodes(element);
+    this.consts = [...viewGenerator.consts]
 
     this.stmts.push(...viewGenerator.stmts);
     this.updateStmts.push(...viewGenerator.updateStmts);
     this.templateStmts.push(...viewGenerator.templateStmts);
-    this.consts.push(...viewGenerator.consts);
 
-    creation += `i0.ɵɵelementEnd();\n`;
     this.stmts.push(generateElementEndNode());
 
-    return { creation, update, attrArray };
+    return { creation: "", update: "", attrArray };
   }
 
   private processText(
@@ -556,9 +545,11 @@ export class ViewGenerator {
 
     const functionName = "Template_For_" + slotIndex + "_Tag";
     const viewGenerator = new ViewGenerator();
-    // viewGenerator.slot = this.slot;
     viewGenerator.setImplicitVariables(iterableIdentifier, this.implicitVariables);
+    viewGenerator.consts = [...this.consts]
+    this.consts = []
     viewGenerator.processChildren(node.children);
+    this.consts = [...viewGenerator.consts]
 
     const repeaterCreateNode = generateRepeaterCreateNode(node, slotIndex, functionName, emptyTemplateFnName);
 
@@ -587,8 +578,10 @@ export class ViewGenerator {
   private processNgEmpty(ngForSibling: Element) {
 
     const viewGenerator = new ViewGenerator();
-    // viewGenerator.slot = this.slot;
+    viewGenerator.consts = [...this.consts]
+    this.consts = []
     viewGenerator.processChildren(ngForSibling.children);
+    this.consts = [...viewGenerator.consts]
 
     return viewGenerator
 
