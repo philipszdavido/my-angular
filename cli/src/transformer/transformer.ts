@@ -8,7 +8,7 @@ import * as path from "node:path";
 import {Template} from "../template/view_generator";
 import {factory} from "typescript";
 
-type ComponentMetadata = {
+export type ComponentMetadata = {
   selector: ts.PropertyAssignment;
   standalone: ts.ObjectLiteralElementLike;
   template: ts.PropertyAssignment;
@@ -24,6 +24,19 @@ type ComponentMetadata = {
   preserveWhitespaces: ts.ObjectLiteralElementLike;
   dependencies: ts.ObjectLiteralElementLike;
 };
+
+export function classHasDecorator(node: ts.ClassDeclaration, decoratorName: string) {
+  const decorators = ts.getDecorators(node);
+  return (
+      decorators && ts.canHaveDecorators(node) &&
+      decorators.some(
+          (decorator) =>
+              ts.isCallExpression(decorator.expression) &&
+              ts.isIdentifier(decorator.expression.expression) &&
+              decorator.expression.expression.text === decoratorName
+      )
+  );
+}
 
 export function hasComponentDecorator(node: ts.ClassDeclaration) {
   const decorators = ts.getDecorators(node);
@@ -44,7 +57,7 @@ export function getComponentDecorator(node: ts.ClassDeclaration): ts.Decorator {
     (decorator) =>
       ts.isCallExpression(decorator.expression) &&
       ts.isIdentifier(decorator.expression.expression) &&
-      decorator.expression.expression.text === "Component"
+        (decorator.expression.expression.text === "Component" || decorator.expression.expression.text === "Directive")
   );
 }
 
@@ -275,7 +288,7 @@ export function createDefineComponentStatic(
   );
 }
 
-function createCmpDefinitionPropertiesNode(
+export function createCmpDefinitionPropertiesNode(
   componentName: string,
   metadata: ComponentMetadata,
   node: ts.Node,
@@ -296,21 +309,30 @@ function createCmpDefinitionPropertiesNode(
 
   // selector
   const selector = (metadata.selector.initializer as ts.StringLiteral).text;
+  if (selector) {
+    let selectorArray = []
 
-  properties.push(
-    ts.factory.createPropertyAssignment(
-      ts.factory.createIdentifier("selectors"),
-      ts.factory.createArrayLiteralExpression(
-        [
-          ts.factory.createArrayLiteralExpression(
-            [ts.factory.createStringLiteral(selector)],
-            false
-          ),
-        ],
-        false
-      )
-    )
-  );
+    if (selector.startsWith("[")) {
+      selectorArray = parseDirectiveSelector(selector)
+    } else {
+      selectorArray.push(selector)
+    }
+
+    properties.push(
+        ts.factory.createPropertyAssignment(
+            ts.factory.createIdentifier("selectors"),
+            ts.factory.createArrayLiteralExpression(
+                [
+                  ts.factory.createArrayLiteralExpression(
+                      selectorArray.map(currentSelector => ts.factory.createStringLiteral(currentSelector)),
+                      false
+                  ),
+                ],
+                false
+            )
+        )
+    );
+  }
 
   // standalone
   if (metadata.standalone) {
@@ -508,6 +530,37 @@ function createCmpDefinitionPropertiesNode(
   }
 
   return properties;
+}
+
+function parseDirectiveSelector(selector: string) {
+
+  let collectSelector = false
+  let selected = ""
+  let parts = []
+
+  for (let i = 0; i < selector.length; i++) {
+    const current = selector[i];
+
+    if (current === "[") {
+      collectSelector = true
+      continue
+    }
+
+    if (current === "]") {
+      parts.push(selected)
+      collectSelector = false
+      selected = ""
+      continue
+    }
+
+    if (collectSelector) {
+      selected += current
+    }
+
+  }
+
+  return parts;
+
 }
 
 function readTemplate(tsFilePath: string, templateUrl: string) {

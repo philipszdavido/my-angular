@@ -7,6 +7,7 @@ import {
   hasComponentDecorator,
   updateClassDeclaration,
 } from "../transformer/transformer";
+import {createDefineDirectiveStatic, hasDirectiveDecorator} from "./directive_visitor";
 
 export function transformPlugin(
   program: ts.Program,
@@ -27,14 +28,18 @@ export function transformPlugin(
         return ts.visitEachChild(node, visit, context);
       }
 
-      if (ts.isClassDeclaration(node) && hasComponentDecorator(node)) {
+      if (ts.isClassDeclaration(node) && (hasComponentDecorator(node) || hasDirectiveDecorator(node))) {
+
+        const isComponent = hasComponentDecorator(node)
+        const isDirective = !isComponent
+
         const componentName = node.name?.text;
 
         const metadata = extractComponentMetadata(getComponentDecorator(node));
 
         const factoryNode = createFactoryStatic(node.name?.text, node);
 
-        const cmpDefNode = createDefineComponentStatic(componentName, metadata, node, hoisted);
+        const cmpDefNode = isDirective ? createDefineDirectiveStatic(componentName, metadata, node, hoisted) : createDefineComponentStatic(componentName, metadata, node, hoisted);
 
         return updateClassDeclaration(node, [factoryNode, cmpDefNode]);
       }
