@@ -193,7 +193,7 @@ export class ViewGenerator {
     this.stmts.push(generateElementStartNode(index, tag, /* Object.keys(attributes).length == 0 ? null : index + 1,*/ attrIndex), ...tempStmts);
 
     // Process children
-    let childIndex = index + 1;
+    // let childIndex = index + 1;
     // element.childNodes.forEach((childNode, idx) => {
     //
     //   if (tag === "style") {
@@ -367,7 +367,10 @@ export class ViewGenerator {
     const templateNode = generateTemplateNode(index, functionName, "ng-if");
 
     const viewGenerator = new ViewGenerator();
+    viewGenerator.consts = [...viewGenerator.consts]
+    this.consts = []
     viewGenerator.processChildren(childNodes);
+    this.consts = [...viewGenerator.consts];
 
     this.stmts.push(templateNode)
 
@@ -379,7 +382,10 @@ export class ViewGenerator {
       this.stmts.push(generateTemplateNode(slotIndex, elseIfName, "ng-elseif"))
 
       const viewGenerator = new ViewGenerator();
+      viewGenerator.consts = [...viewGenerator.consts]
+      this.consts = []
       viewGenerator.processChildNodes(elseIfNode);
+      this.consts = [...viewGenerator.consts];
 
       for(const attr in elseIfNode.attribs) {
         if (attr == "condition") {
@@ -413,7 +419,10 @@ export class ViewGenerator {
       })
 
       const viewGenerator = new ViewGenerator();
+      viewGenerator.consts = [...viewGenerator.consts]
+      this.consts = []
       viewGenerator.processChildNodes(elseNode);
+      this.consts = [...viewGenerator.consts];
       this.templateStmts.push({
         functionName: elseFunctionName,
         updateStmts: [...viewGenerator.updateStmts],
@@ -442,7 +451,7 @@ export class ViewGenerator {
 
   processChildNodes(node: Element) {
 
-    this.index = 0
+    this.setIndex(0)
 
     for (; this.index < node.childNodes.length; this.index++) {
       const childNode = node.childNodes[this.index];
@@ -458,7 +467,7 @@ export class ViewGenerator {
 
   processChildren(nodes: Node[]) {
 
-    this.index = 0
+    this.setIndex()
 
     for (; this.index < nodes.length; this.index++) {
       const childNode = nodes[this.index];
@@ -538,7 +547,7 @@ export class ViewGenerator {
 
         this.slot++;
         this.skipNode = ngForSibling.indx;
-        this.index = ngForSibling.indx;
+        this.setIndex(ngForSibling.indx);
 
       }
     }
@@ -618,7 +627,10 @@ export class ViewGenerator {
             })
 
             const viewGenerator = new ViewGenerator();
+            viewGenerator.consts = [...viewGenerator.consts]
+            this.consts = []
             viewGenerator.processChildNodes(childNode);
+            this.consts = [...viewGenerator.consts]
 
             this.templateStmts.push({
               functionName: functionName,
@@ -646,7 +658,10 @@ export class ViewGenerator {
             })
 
             const viewGenerator = new ViewGenerator();
+            viewGenerator.consts = [...viewGenerator.consts]
+            this.consts = []
             viewGenerator.processChildNodes(childNode);
+            this.consts = [...viewGenerator.consts]
 
             this.templateStmts.push({
               functionName: functionName,
@@ -686,7 +701,7 @@ export class ViewGenerator {
     this.implicitVariables.push(variableName);
   }
 
-  private setIndex(index: number) {
+  private setIndex(index: number = 0) {
     this.index = index;
   }
 }
