@@ -117,13 +117,13 @@ export function makePropDecorator(
 export interface DirectiveDecorator {}
 export interface Directive {}
 
-export const Directive: DirectiveDecorator = makeDecorator(
-    'Directive',
-    (dir: Directive = {}) => dir,
-    undefined,
-    undefined,
-    (type: Type<any>, meta: Directive) => null, //compileDirective(type, meta),
-);
+// export const Directive: DirectiveDecorator = makeDecorator(
+//     'Directive',
+//     (dir: Directive = {}) => dir,
+//     undefined,
+//     undefined,
+//     (type: Type<any>, meta: Directive) => null, //compileDirective(type, meta),
+// );
 
 export interface Component extends Directive {}
 
