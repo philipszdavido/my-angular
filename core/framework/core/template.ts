@@ -1,4 +1,4 @@
-import {enterView, leaveView, LView, runtime, TNode, TNodeType, TView, TViewType, UPDATE} from "./core";
+import {enterView, leaveView, LView, runtime, TNode, TNodeType, TView, TViewType} from "./core";
 import {appendChild, createTNode} from "./element";
 import {createLView, getLView, getSelectedIndex, getTView, setCurrentTNode} from "./state";
 import {RenderFlags} from "./render_flags";
@@ -250,7 +250,9 @@ export function ɵɵrepeater(iterable: Array<any>) {
     const currentLView = hostLView.instances[metadataSlotIdx]
 
     if (currentLView) {
-        clearContainer(currentLView);
+        currentLView.instances.forEach(instance => {
+            clearContainer(instance);
+        })
     }
 
     // get and call the template
@@ -258,8 +260,6 @@ export function ɵɵrepeater(iterable: Array<any>) {
     const templateFn = tNode.tView.template;
     const comment = hostLView.data[metadataSlotIdx];
     const embeddedTView = tNode.tView
-
-    clearContainer(currentLView)
 
     if (!iterable || iterable.length == 0) {
         // get the context_value
@@ -306,15 +306,15 @@ export function ɵɵrepeater(iterable: Array<any>) {
 
         // we will need to create an embedded LView which will pass to enterView
         const embeddedLView = createLView(
-            hostLView,
-            embeddedTView,
+            currentLView,
+            currentLView.tView,
             context,
             null,
             tNode
         );
 
         embeddedLView.host = comment;
-        hostLView.instances[metadataSlotIdx] = embeddedLView;
+        currentLView.instances[i] = embeddedLView;
 
         enterView(embeddedLView)
 
