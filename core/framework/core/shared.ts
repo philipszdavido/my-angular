@@ -1,4 +1,5 @@
-import {ComponentDef, DirectiveDef, getComponentDef, getDirectiveDef, TNode, TView, Type} from "./core";
+import {ComponentDef, CssSelector, DirectiveDef, getComponentDef, getDirectiveDef, TNode, TView, Type, TAttributes} from "./core";
+import {AttributeMarker} from "./attribute_marker";
 
 export function findDirectiveDefMatches(
     tView: TView,
@@ -49,11 +50,22 @@ function isNodeMatchingSelector(tNode: TNode,
                                 isProjectionMode: boolean = false,) {
 
     const tNodeSelector = tNode.value;
+    const nodeAttrs = tNode.attrs;
 
     for (let i = 0; i < selector.length; i++) {
         if (selector[i] === tNodeSelector) {
             return true;
         }
+
+        for (let nodeAttrIndex = 0; nodeAttrIndex < nodeAttrs.length; nodeAttrIndex++) {
+            const nodeAttr = nodeAttrs[nodeAttrIndex];
+            if (Array.isArray(nodeAttr)) {
+                if (nodeAttr[0] === selector[i]) {
+                    return true;
+                }
+            }
+        }
+
     }
 
     return false
@@ -62,4 +74,22 @@ function isNodeMatchingSelector(tNode: TNode,
 
 export function extractDirectiveDef(type: Type<any>): DirectiveDef<any> | ComponentDef<any> | null {
     return getComponentDef(type) || getDirectiveDef(type);
+}
+
+function getNameOnlyMarkerIndex(nodeAttrs: TAttributes) {
+    for (let i = 0; i < nodeAttrs.length; i++) {
+        const nodeAttr = nodeAttrs[i];
+        if (isNameOnlyAttributeMarker(nodeAttr)) {
+            return i;
+        }
+    }
+    return nodeAttrs.length;
+}
+
+export function isNameOnlyAttributeMarker(marker: string | AttributeMarker | CssSelector) {
+    return (
+        marker === AttributeMarker.Bindings ||
+        marker === AttributeMarker.Template ||
+        marker === AttributeMarker.I18n
+    );
 }

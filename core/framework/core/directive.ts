@@ -43,6 +43,14 @@ function initializeDirectives(
         }
     }
 
+    for (let i = 0; i < directivesLength; i++) {
+        const def = directives[i];
+
+        if (def.hostBindings !== null /*|| def.hostAttrs !== null || def.hostVars !== 0*/)
+            tNode.flags |= TNodeFlags.hasHostBindings;
+
+    }
+
     initTNodeFlags(tNode, tView.data.length, directivesLength);
 
 }

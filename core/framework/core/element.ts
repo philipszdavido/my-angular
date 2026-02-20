@@ -76,7 +76,7 @@ export function ɵɵelementStart(index: number, tag: string, attrsIndex?: number
                     (el as HTMLElement).setAttribute("class", attr[1]);
                 } else if (attribute == AttributeMarker.Bindings) {
 
-                } else if (attribute == AttributeMarker.Bindings) {
+                } else if (attribute == AttributeMarker.Template) {
 
                 } else {
                     (el as HTMLElement).setAttribute(attribute, attr[1]);

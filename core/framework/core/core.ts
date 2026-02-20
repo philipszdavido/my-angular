@@ -56,7 +56,7 @@ export interface DirectiveDef<T> {
   >;
   readonly declaredInputs: Record<string, string>;
   readonly outputs: Record<string, string>;
-  // readonly hostBindings: HostBindingsFunction<T> | null;
+  readonly hostBindings: HostBindingsFunction<T> | null;
   readonly hostVars: number;
   readonly type: Type<T>;
   readonly selectors: CssSelectorList;
@@ -199,7 +199,7 @@ type NodeInputBindings = {
   [x: string]: number[];
 }
 
-type TAttributes = (string | AttributeMarker | CssSelector)[]
+export type TAttributes = (string | AttributeMarker | CssSelector)[]
 
 export type TNode = {
   directiveStart: number;
@@ -300,6 +300,7 @@ export function ɵɵdefineComponent<T>(componentDefinition: ComponentDefinition<
     template: componentDefinition.template,
     type: (componentDefinition as unknown as DirectiveDefinition<T>).type,
     vars: componentDefinition.vars,
+    hostBindings: componentDefinition.hostBindings,
   }
 
   def.id = getComponentId(def);
