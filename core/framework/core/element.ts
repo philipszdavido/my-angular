@@ -1,18 +1,24 @@
 import {AttributeMarker} from "./attribute_marker";
 import {
+    ComponentDef,
     CREATE,
+    DirectiveDef,
     enterView,
     leaveView,
     LView,
     NameSpace,
     runtime,
     TNode,
+    TNodeFlags,
     TNodeType,
     TView,
     TViewType,
     UPDATE
 } from "./core";
 import {getCurrentParentTNode, setCurrentTNode} from "./state";
+import {findDirectiveDefMatches, isComponentDef} from "./shared";
+import {resolveDirectives} from "./directive";
+import {createLView, createTView} from "./bootstrap";
 
 const COMPONENT_VARIABLE = '%COMP%';
 const HOST_ATTR = `_nghost-${COMPONENT_VARIABLE}`;
@@ -25,6 +31,8 @@ export function ɵɵelementStart(index: number, tag: string, attrsIndex?: number
 
     let el = lView.data[index];
 
+    let matchedDirectiveDefs;
+
     // get or create tNode
     let tNode: TNode
 
@@ -32,7 +40,7 @@ export function ɵɵelementStart(index: number, tag: string, attrsIndex?: number
         tNode = tView.data[index] as TNode;
     } else {
         const parentNode = getCurrentParentTNode();
-        tNode = createTNode(index, tag, TNodeType.Element, null, parentNode);
+        tNode = createTNode(index, tag, TNodeType.Element, null, parentNode, null);
         tView.data[index] = tNode;
     }
 
@@ -56,39 +64,43 @@ export function ɵɵelementStart(index: number, tag: string, attrsIndex?: number
         if (attrsIndex !== undefined && attrsIndex >= 0) {
             // get consts
             const attrArray = tView.consts[attrsIndex];
+            tNode.attrs = attrArray;
             for (let i = 0; i < attrArray.length; i++) {
 
                 const attr = attrArray[i];
+                const attribute = attr[0];
 
-                if (attr[0] == AttributeMarker.Styles) {
+                if (attribute == AttributeMarker.Styles) {
                     (el as HTMLElement).setAttribute("style", attr[1]);
-                } else if (attr[0] == AttributeMarker.Classes) {
+                } else if (attribute == AttributeMarker.Classes) {
                     (el as HTMLElement).setAttribute("class", attr[1]);
+                } else if (attribute == AttributeMarker.Bindings) {
+
+                } else if (attribute == AttributeMarker.Bindings) {
+
                 } else {
-                    (el as HTMLElement).setAttribute(attr[0], attr[1]);
+                    (el as HTMLElement).setAttribute(attribute, attr[1]);
                 }
             }
         }
 
+        matchedDirectiveDefs = resolveDirectives(tNode, tView, lView)
+
         const id = lView.tView?.id;
 
-        // check the tag is a component
-        // search in tview directive registry
-
-        const componentType = getComponent(tView, tag);
-
-        const isComponent = componentType || false;
-
-        if (isComponent) {
-            renderComponent(componentType, tView, el, lView, index);
-        } else {
-            const id_value = "_ngcontent-" + id;
-            (el as HTMLElement).setAttribute(id_value, id_value);
-        }
+        const id_value = "_ngcontent-" + id;
+        (el as HTMLElement).setAttribute(id_value, id_value);
 
     }
 
     appendChild(el, lView, tView, runtime.currentTNode.parent)
+
+    // check the tag is a component
+    // search in tview directive registry
+
+    if (isDirectiveHost(tNode)) {
+        renderComponent(matchedDirectiveDefs[tNode.componentOffset], tView, el, lView, index);
+    }
 
 }
 
@@ -111,13 +123,30 @@ export function appendChild(native: Element | any, lView: LView, tView: TView, t
 
 }
 
-export function createTNode(index: number, tag: string, type: TNodeType, tView: TView, parentNode: TNode) {
-   return {
+export function createTNode(
+    index: number,
+    tag: string,
+    type: TNodeType,
+    tView: TView,
+    parentNode: TNode,
+    attrs: any[] | null,
+) {
+    let flags = 0;
+
+    return {
         type,
         index: index,
         value: tag,
         tView: tView,
-        parent: parentNode
+        parent: parentNode,
+        flags,
+        attrs,
+        localNames: null,
+        inputs: null,
+        outputs: null,
+        componentOffset: -1,
+        directiveStart: -1,
+        directiveEnd: -1,
     }
 }
 
@@ -139,28 +168,40 @@ export function ɵɵelementEnd() {
 
 }
 
-function renderComponent(component: any, tView: TView, el: any, parent: LView, index: number) {
+function renderComponent(def: DirectiveDef<any>, parentTView: TView, el: any, parent: LView, index: number) {
 
-    const componentDef = component.ɵcmp;
-    const componentInstance = component.ɵfac();
+    // @ts-ignore
+    const componentInstance = def.type.ɵfac();
+
+    if (!isComponentDef(def)) {
+        return;
+    }
+
+    const componentDef = def as ComponentDef<any>;
+
+    const tView = getOrCreateComponentTView(componentDef);
 
     const templateFn = componentDef.template;
 
-    const id_value = "_nghost-" + componentDef.tView.id;
+    const id_value = "_nghost-" + (componentDef as ComponentDef<any>).tView.id;
     (el as HTMLElement).setAttribute(id_value, id_value);
 
     if (templateFn !== null) {
 
-        const lView: LView = {
-            tView: componentDef.tView,
-            data: [...componentDef.tView.blueprint],
-            instances: [...componentDef.tView.blueprint],
-            parent: parent,
-            host: el,
-            context: componentInstance,
-            context_value: null,
-            queries: null,
-        };
+        // const lView: LView = {
+        //     flags: undefined,
+        //     id: 0,
+        //     tView: componentDef.tView,
+        //     data: [...componentDef.tView.blueprint],
+        //     instances: [...componentDef.tView.blueprint],
+        //     parent: parent,
+        //     host: el,
+        //     context: componentInstance,
+        //     context_value: null,
+        //     queries: null
+        // };
+
+        const lView: LView = createLView(parent, tView, componentInstance, null, el, null);
 
         parent.instances[index] = lView;
 
@@ -168,8 +209,8 @@ function renderComponent(component: any, tView: TView, el: any, parent: LView, i
         templateFn(CREATE, componentInstance);
         componentDef.tView.firstCreatePass = false;
 
-        if (componentDef.tView.styles) {
-            shimCss(componentDef.id, componentDef.tView.styles.join("\n"));
+        if (componentDef.styles) {
+            shimCss(componentDef.id, componentDef.styles.join("\n"));
         }
 
         // First update pass
@@ -190,17 +231,28 @@ function shimCss(componentIdentifier: string, styleText: string) {
     document.head.appendChild(style);
 }
 
-export function getComponent(tView: TView, tag: string) {
-    const componentType = tView.directiveRegistry?.find(
-        (directive) => {
+export function isDirectiveHost(tNode: TNode): boolean {
+    return (tNode.flags & TNodeFlags.isDirectiveHost) === TNodeFlags.isDirectiveHost;
+}
 
-            const found = directive.ɵcmp.selectors?.some(t => t == tag)
+export function getOrCreateComponentTView(def: ComponentDef<any>): TView {
+    const tView = def.tView;
 
-            return !!found;
+    if (tView === null) {
 
-        }
-    );
+        const declTNode = null;
 
-    return componentType;
+        return (def.tView = createTView(
+            TViewType.Component,
+            declTNode,
+            def.template,
+            def.decls,
+            def.vars,
+            def.directiveDefs,
+            def.consts,
+            def.id,
+        ));
+    }
 
+    return tView;
 }
