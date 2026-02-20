@@ -1,5 +1,5 @@
 import {enterView, leaveView, LView, runtime, TNode, TView, TViewType, UPDATE} from "./core";
-import {getComponent} from "./element";
+import { isDirectiveHost } from "./element";
 
 function listenerCallback(lView: LView, fn: any) {
     return (evt: Event | any ) => {
@@ -22,17 +22,13 @@ export function ɵɵlistener(listener: string, fn: () => void) {
     const lView = runtime.currentLView!;
     const tView = lView.tView;
 
-    const componentType = getComponent(tView, tNode.value.toLowerCase());
-
-    const isComponent = componentType || false;
-
     const componentLView = getComponentLView(lView);
 
-    if (isComponent) {
+    if (isDirectiveHost(tNode)) {
 
         const childLView = lView.instances[tNode.index];
 
-        for( let output in childLView.tView.outputs) {
+        for( let output in tNode.outputs) {
 
             if (output == listener) {
                 childLView.context[listener].addEventListener(listenerOutputCallback(componentLView, fn));

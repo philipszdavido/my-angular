@@ -16,22 +16,23 @@ export function ɵɵtemplate<T>(
     const declarationTView = declarationLView.tView;
     // create TView
 
+    const attrs = declarationTView.consts[attrsIndex];
+
     const embeddedTView: TView = {
         blueprint: new Array(9).fill(null),
         firstCreatePass: true,
         template: templateFn,
         directiveRegistry: declarationTView.directiveRegistry,
         consts: consts,
-        styles: [''],
-        inputs: null,
-        outputs: null,
+        styles: declarationTView.styles,
         id: declarationTView.id, // index.toString(),
         type: TViewType.Embedded,
-        data: []
+        data: [],
+        components: declarationTView.components,
     }
 
     const parentTNode = runtime.isParent ? runtime.currentTNode : runtime.currentTNode.parent
-    const tNode: TNode = createTNode(index, tagName, TNodeType.Container, embeddedTView, parentTNode);
+    const tNode: TNode = createTNode(index, tagName, TNodeType.Container, embeddedTView, parentTNode, attrs);
     declarationTView.data[index] = tNode;
 
     // create comment
@@ -147,15 +148,16 @@ export function ɵɵrepeaterCreate<T>(
         directiveRegistry: tView.directiveRegistry,
         consts: tView.consts,
         styles: tView.styles,
-        inputs: tView.inputs,
-        outputs: tView.outputs,
         id: tView.id,
         type: TViewType.Embedded,
-        data: []
+        data: [],
+        components: tView.components,
     }
 
+    const attrs = tView.consts[attrsIndex]
+
     const parentTNode = runtime.isParent ? runtime.currentTNode : runtime.currentTNode.parent
-    const tNode: TNode = createTNode(forIndex, tagName, TNodeType.Container, embeddedTView, parentTNode);
+    const tNode: TNode = createTNode(forIndex, tagName, TNodeType.Container, embeddedTView, parentTNode, attrs);
     tView.data[forIndex] = tNode;
 
     // create comment
@@ -205,15 +207,14 @@ function repeaterForEmpty<T>(
         directiveRegistry: tView.directiveRegistry,
         consts: tView.consts,
         styles: tView.styles,
-        inputs: tView.inputs,
-        outputs: tView.outputs,
         id: tView.id,
         type: TViewType.Embedded,
-        data: []
+        data: [],
+        components: tView.components,
     }
 
     const parentTNode = runtime.isParent ? runtime.currentTNode : runtime.currentTNode.parent
-    const tNode: TNode = createTNode(index, tagName, TNodeType.Container, embeddedTView, parentTNode);
+    const tNode: TNode = createTNode(index, tagName, TNodeType.Container, embeddedTView, parentTNode, null);
     tView.data[index] = tNode;
 
     // create comment

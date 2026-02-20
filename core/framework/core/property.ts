@@ -1,5 +1,5 @@
 import {enterView, leaveView, runtime, TNode, UPDATE} from "./core";
-import {getComponent} from "./element";
+import { isDirectiveHost} from "./element";
 
 // i0.ɵɵproperty("bind", ctx.name);
 export function ɵɵproperty<T>(
@@ -12,11 +12,7 @@ export function ɵɵproperty<T>(
 
     lView.data[tNode.index][propName] = value;
 
-    const componentType = getComponent(tView, tNode.value.toLowerCase());
-
-    const isComponent = componentType || false;
-
-    if (isComponent) {
+    if (isDirectiveHost(tNode)) {
 
         const childLView = lView.instances[runtime.selectedIndex];
         childLView.context[propName] = value as string;

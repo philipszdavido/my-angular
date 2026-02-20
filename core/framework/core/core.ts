@@ -1,3 +1,7 @@
+import {AttributeMarker} from "./attribute_marker";
+import {RenderFlags} from "./render_flags";
+import {LViewFlags, Writable} from "./type";
+
 export const CREATE = 1;
 export const UPDATE = 2;
 
@@ -5,6 +9,129 @@ export interface LQuery<T> {}
 
 export interface LQueries {
   queries: LQuery<any>[];
+}
+
+export const enum TNodeFlags {
+  isDirectiveHost = 1 << 0,
+  isProjected = 1 << 1,
+  hasContentQuery = 1 << 2,
+  hasClassInput = 1 << 3,
+  hasStyleInput = 1 << 4,
+  isDetached = 1 << 5,
+  hasHostBindings = 1 << 6,
+  inSkipHydrationBlock = 1 << 7,
+  isControlFlowStart = 1 << 8,
+  isInControlFlow = 1 << 9,
+  isFormValueControl = 1 << 10,
+  isFormCheckboxControl = 1 << 11,
+  isPassThroughControl = 1 << 12,
+}
+
+export type TConstantsOrFactory = (AttributeMarker | string)[][] | (() => (AttributeMarker | string)[][]);
+
+type DirectiveInputs<T> = { [P in keyof T]?: string | [flags: InputFlags, publicName: string, declaredName?: string | undefined, transform?: InputTransformFunction | undefined] | undefined; }
+export type DirectiveDefListOrFactory = (() => DirectiveDefList) | DirectiveDefList;
+
+export type DirectiveDefList = (DirectiveDef<any> | ComponentDef<any>)[];
+export type HostBindingsFunction<T> = <U extends T>(rf: RenderFlags, ctx: U) => void;
+export enum InputFlags {
+  None = 0,
+  SignalBased = 1 << 0,
+  HasDecoratorInputTransform = 1 << 1,
+}
+export type InputTransformFunction = (value: any) => any;
+export type CssSelectorList = CssSelector[];
+export type CssSelector = (string | SelectorFlags)[];
+export const enum SelectorFlags {
+  NOT = 0b0001,
+  ATTRIBUTE = 0b0010,
+  ELEMENT = 0b0100,
+  CLASS = 0b1000,
+}
+
+export interface DirectiveDef<T> {
+  readonly inputs: Record<
+      string,
+      [minifiedName: string, flags: InputFlags, transform: InputTransformFunction | null]
+  >;
+  readonly declaredInputs: Record<string, string>;
+  readonly outputs: Record<string, string>;
+  // readonly hostBindings: HostBindingsFunction<T> | null;
+  readonly hostVars: number;
+  readonly type: Type<T>;
+  readonly selectors: CssSelectorList;
+  readonly exportAs: string[] | null;
+  readonly standalone: boolean;
+  readonly signals: boolean;
+}
+
+export interface ComponentDef<T> extends DirectiveDef<T> {
+  readonly id: string;
+  readonly template: ComponentTemplate<T>;
+  readonly consts: (AttributeMarker | string)[][] | null;
+  readonly ngContentSelectors?: string[];
+  readonly styles: string[];
+  readonly decls: number;
+  readonly vars: number;
+  readonly data: {
+    [kind: string]: any;
+    animation?: any[];
+  };
+
+  readonly onPush: boolean;
+  readonly signals: boolean;
+  directiveDefs: DirectiveDefListOrFactory | null;
+  dependencies: TypeOrFactory<DependencyTypeList> | null;
+  tView: TView | null;
+  getExternalStyles: ((encapsulationId?: string) => string[]) | null;
+  readonly _?: unknown;
+}
+
+export type ComponentTemplate<T> = <U extends T>(rf: RenderFlags, ctx: T | U) => void
+
+type TypeOrFactory<T> = T | (() => T)
+
+export type DependencyType = DirectiveType<any> | ComponentType<any> | PipeType<any> | Type<any>;
+
+export type DependencyTypeList = Array<DependencyType>;
+
+export interface Type<T> extends Function {
+  new (...args: any[]): T;
+}
+
+export interface ComponentType<T> extends Type<T> {
+  ɵcmp: unknown;
+}
+
+export interface DirectiveType<T> extends Type<T> {
+  ɵdir: unknown;
+  ɵfac: unknown;
+}
+
+export interface PipeType<T> extends Type<T> {
+  ɵpipe: unknown;
+}
+
+interface DirectiveDefinition<T> {
+  type: Type<T>;
+  selectors?: CssSelectorList;
+  inputs?: DirectiveInputs<T>;
+  outputs?: {[P in keyof T]?: string};
+  hostBindings?: HostBindingsFunction<T>;
+  hostVars?: number;
+  exportAs?: string[];
+  standalone?: boolean;
+  signals?: boolean;
+}
+
+interface ComponentDefinition<T> extends DirectiveDefinition<T> {
+  decls: number;
+  vars: number;
+  template: ComponentTemplate<T>;
+  consts?: TConstantsOrFactory;
+  dependencies?: TypeOrFactory<DependencyTypeList>;
+  styles?: string[];
+  data?: {[kind: string]: any};
 }
 
 export type Element = HTMLElement | Text | SVGElement | Comment;
@@ -15,17 +142,11 @@ export interface Type<T> extends Function {
 
 export const enum TNodeType {
   Text = 0b1,
-
   Element = 0b10,
-
   Container = 0b100,
-
   ElementContainer = 0b1000,
-
   Projection = 0b10000,
-
   Icu = 0b100000,
-
   Placeholder = 0b1000000,
 
   LetDeclaration = 0b10000000,
@@ -51,10 +172,9 @@ export type TView = {
   directiveRegistry: any[];
   consts: any[][];
   styles: string[];
-  inputs: { string: string };
-  outputs: { string: string };
   id: string;
   data: TData;
+  components: number[] | null;
 };
 
 export interface LView {
@@ -66,27 +186,38 @@ export interface LView {
   context: any; // class instance of this LView
 
   context_value: any | null;
-  queries: LQueries
+  queries: LQueries,
+  flags: LViewFlags,
+  id: number,
 }
 
+type NodeOutputBindings = {
+  [x: string]: number[];
+}
+
+type NodeInputBindings = {
+  [x: string]: number[];
+}
+
+type TAttributes = (string | AttributeMarker | CssSelector)[]
+
 export type TNode = {
+  directiveStart: number;
+  directiveEnd: number;
   type: TNodeType;
   index: number;
   value: any;
   tView: TView | null;
   parent: TNode | null;
+  attrs: TAttributes | null;
+  localNames: (string | number)[] | null;
+  inputs: NodeInputBindings | null;
+  outputs: NodeOutputBindings | null;
+  flags: TNodeFlags;
+  componentOffset: number
 };
 
 export interface LContainer extends LView {}
-
-export interface ComponentDefinition<T> {
-  type: Type<T>;
-  selectors: string[][];
-  dependencies: Type<T>[];
-  template: TemplateFn;
-  tView: TView;
-  id: string;
-}
 
 export enum NameSpace {
   None,
@@ -145,26 +276,36 @@ export function ɵɵadvance(delta: number = 1) {
   runtime.selectedIndex = delta;
 }
 
-export function ɵɵdefineComponent<T>(def: any): ComponentDefinition<T> {
+export function ɵɵdefineComponent<T>(componentDefinition: ComponentDefinition<T>): ComponentDef<T> {
 
-  const compId = getComponentId(def);
+  const def: Writable<ComponentDef<T>> = {
+    consts: typeof componentDefinition.consts === "function" ? componentDefinition.consts() : componentDefinition.consts,
+    data: componentDefinition.data,
+    declaredInputs: null,
+    decls: componentDefinition.decls,
+    dependencies: (componentDefinition).dependencies,
+    directiveDefs: null,
+    exportAs: [],
+    getExternalStyles: null,
+    hostVars: 0,
+    id: "",
+    inputs: convertDirectiveInputs((componentDefinition as unknown as DirectiveDefinition<T>).inputs),
+    onPush: false,
+    outputs: (componentDefinition as unknown as DirectiveDefinition<T>).outputs,
+    selectors: (componentDefinition as unknown as DirectiveDefinition<T>).selectors,
+    signals: false,
+    standalone: false,
+    styles: componentDefinition.styles,
+    tView: null,
+    template: componentDefinition.template,
+    type: (componentDefinition as unknown as DirectiveDefinition<T>).type,
+    vars: componentDefinition.vars,
+  }
 
-  const tView: TView = {
-    blueprint: new Array(def.decls).fill(null),
-    firstCreatePass: true,
-    template: def.template,
-    directiveRegistry: def.dependencies,
-    consts: def.consts,
-    styles: def.styles,
-    inputs: def.inputs,
-    outputs: def.outputs,
-    id: compId,
-    type: TViewType.Root,
-    data: []
-  };
-
-  def.tView = tView;
-  def.id = compId;
+  def.id = getComponentId(def);
+  const dependencies = componentDefinition.dependencies;
+  def.directiveDefs = extractDefListOrFactory(dependencies, extractDirectiveDef);
+  // def.pipeDefs = extractDefListOrFactory(dependencies, getPipeDef);
 
   return def;
 }
@@ -187,4 +328,72 @@ export function getComponentId<T>(componentDef: any): string {
 
   return compId;
 
+}
+
+export function extractDefListOrFactory<T>(
+    dependencies: TypeOrFactory<DependencyTypeList> | undefined,
+    defExtractor: (type: Type<unknown>) => T | null,
+): (() => T[]) | T[] | null {
+  if (!dependencies) {
+    return null;
+  }
+
+  return () => {
+    const resolvedDependencies = typeof dependencies === 'function' ? dependencies() : dependencies;
+    const result: T[] = [];
+
+    for (const dep of resolvedDependencies) {
+      const definition = defExtractor(dep);
+      if (definition !== null) {
+        result.push(definition);
+      }
+    }
+
+    return result;
+  };
+}
+
+export function extractDirectiveDef(type: Type<any>): DirectiveDef<any> | ComponentDef<any> | null {
+  return getComponentDef(type) || getDirectiveDef(type);
+}
+
+export function getComponentDef<T>(type: any): ComponentDef<T> | null {
+  let NG_COMP_DEF = "ɵcmp";
+  return type[NG_COMP_DEF] || null;
+}
+
+export function getDirectiveDef<T>(type: any): DirectiveDef<T> | null {
+  let NG_DIR_DEF = "ɵdir";
+  return type[NG_DIR_DEF] || null;
+}
+
+function convertDirectiveInputs<T>(
+    inputs: DirectiveInputs<T>
+): Record<string, [minifiedName: string, flags: InputFlags, transform: InputTransformFunction]> {
+  const result: Record<
+      string,
+      [minifiedName: string, flags: InputFlags, transform: InputTransformFunction]
+  > = {};
+
+  for (const minifiedName in inputs) {
+    const value = inputs[minifiedName];
+    if (!value) continue;
+
+    // Case 1: string form
+    if (typeof value === 'string') {
+      result[value] = [minifiedName, 0, undefined];
+      continue;
+    }
+
+    // Case 2: tuple form
+    const [flags, publicName, _declaredName, transform] = value;
+
+    result[publicName] = [
+      minifiedName,
+      flags ?? 0,
+      transform ?? undefined,
+    ];
+  }
+
+  return result;
 }
