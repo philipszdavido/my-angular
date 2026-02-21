@@ -43,11 +43,19 @@ function initializeDirectives(
         }
     }
 
+    if (directivesLength > 0) {
+        tNode.directiveToIndex = [];
+    }
+
     for (let i = 0; i < directivesLength; i++) {
         const def = directives[i];
 
         if (def.hostBindings !== null /*|| def.hostAttrs !== null || def.hostVars !== 0*/)
             tNode.flags |= TNodeFlags.hasHostBindings;
+
+        if (isComponentDef(def)) continue
+
+        tNode.directiveToIndex.push(def.type)
 
     }
 
@@ -65,4 +73,11 @@ function initTNodeFlags(tNode: TNode, index: number, numberOfDirectives: number)
     tNode.directiveStart = index;
     tNode.directiveEnd = index + numberOfDirectives;
     // tNode.providerIndexes = index;
+}
+
+export function createDirectivesInstances(tNode: TNode, tView: TView, lView: LView) {
+    for (let i = 0; i < tNode.directiveToIndex.length; i++) {
+        const type = tNode.directiveToIndex[i];
+        const dirInstance = type.ɵfac()
+    }
 }

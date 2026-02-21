@@ -17,7 +17,7 @@ import {
 } from "./core";
 import {getCurrentParentTNode, setCurrentTNode} from "./state";
 import {findDirectiveDefMatches, isComponentDef} from "./shared";
-import {resolveDirectives} from "./directive";
+import {createDirectivesInstances, resolveDirectives} from "./directive";
 import {createLView, createTView} from "./bootstrap";
 
 const COMPONENT_VARIABLE = '%COMP%';
@@ -99,6 +99,7 @@ export function ɵɵelementStart(index: number, tag: string, attrsIndex?: number
     // search in tview directive registry
 
     if (isDirectiveHost(tNode)) {
+        createDirectivesInstances(tNode, tView, lView)
         renderComponent(matchedDirectiveDefs[tNode.componentOffset], tView, el, lView, index);
     }
 
@@ -130,7 +131,7 @@ export function createTNode(
     tView: TView,
     parentNode: TNode,
     attrs: any[] | null,
-) {
+): TNode {
     let flags = 0;
 
     return {
@@ -147,6 +148,7 @@ export function createTNode(
         componentOffset: -1,
         directiveStart: -1,
         directiveEnd: -1,
+        directiveToIndex: []
     }
 }
 

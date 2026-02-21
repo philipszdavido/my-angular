@@ -202,6 +202,7 @@ type NodeInputBindings = {
 export type TAttributes = (string | AttributeMarker | CssSelector)[]
 
 export type TNode = {
+  directiveToIndex: any[];
   directiveStart: number;
   directiveEnd: number;
   type: TNodeType;
