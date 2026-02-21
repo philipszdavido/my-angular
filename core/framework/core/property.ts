@@ -23,3 +23,18 @@ export function ɵɵproperty<T>(
     }
 
 }
+
+export function ɵɵclassProp(
+    className: string,
+    value: boolean | undefined | null,
+) {
+    // checkStylingProperty(className, value, null, true);
+}
+
+export function ɵɵstyleProp() {
+
+}
+
+export function ɵɵattribute() {
+
+}

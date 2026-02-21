@@ -58,11 +58,7 @@ export function transformPlugin(
 
         const factoryNode = createFactoryStatic(node.name?.text, node, directivesToInject);
 
-        if (isDirective) {
-          createHostBinding(node, metadata)
-        }
-
-        const cmpDefNode = isDirective ? createDefineDirectiveStatic(componentName, metadata, node, hoisted) : createDefineComponentStatic(componentName, metadata, node, hoisted);
+        const cmpDefNode = isDirective ? createDefineDirectiveStatic(componentName, metadata, node, hoisted, createHostBinding(node, metadata)) : createDefineComponentStatic(componentName, metadata, node, hoisted);
 
         return updateClassDeclaration(node, [factoryNode, cmpDefNode]);
       }
