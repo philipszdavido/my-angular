@@ -8,5 +8,6 @@ export * from "./property"
 export * from "./listener"
 export * from "./template"
 export * from "./next_context"
+export * from "../common";
 
 export { EventEmitter } from "./EventEmitter"
