@@ -7,7 +7,8 @@ import {
   hasComponentDecorator,
   updateClassDeclaration,
 } from "../transformer/transformer";
-import {createDefineDirectiveStatic, hasDirectiveDecorator} from "./directive_visitor";
+import {createDefineDirectiveStatic, createHostBinding, hasDirectiveDecorator} from "./directive_visitor";
+import {ConstructorDeclaration} from "typescript";
 
 export function transformPlugin(
   program: ts.Program,
@@ -30,6 +31,24 @@ export function transformPlugin(
 
       if (ts.isClassDeclaration(node) && (hasComponentDecorator(node) || hasDirectiveDecorator(node))) {
 
+        // we need to check if the constructor has arguments
+        const directivesToInject: ts.ParameterDeclaration[] = []
+        node.members.find(element => {
+          if (ts.isConstructorDeclaration(element)) {
+            (element).parameters.forEach((parameter) => {
+              directivesToInject.push(parameter);
+            })
+          }
+        })
+
+        directivesToInject.forEach(param => {
+          if (!param.type || !ts.isTypeReferenceNode(param.type)) {
+            throw new Error("Constructor parameter must have a type for DI");
+          }
+
+          const typeName = param.type.typeName;
+        });
+
         const isComponent = hasComponentDecorator(node)
         const isDirective = !isComponent
 
@@ -37,7 +56,11 @@ export function transformPlugin(
 
         const metadata = extractComponentMetadata(getComponentDecorator(node));
 
-        const factoryNode = createFactoryStatic(node.name?.text, node);
+        const factoryNode = createFactoryStatic(node.name?.text, node, directivesToInject);
+
+        if (isDirective) {
+          createHostBinding(node, metadata)
+        }
 
         const cmpDefNode = isDirective ? createDefineDirectiveStatic(componentName, metadata, node, hoisted) : createDefineComponentStatic(componentName, metadata, node, hoisted);
 

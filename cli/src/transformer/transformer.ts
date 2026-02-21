@@ -7,6 +7,7 @@ import {i0, ɵcmp, ɵfac, ɵɵdefineComponent} from "../constants/constants";
 import * as path from "node:path";
 import {Template} from "../template/view_generator";
 import {factory} from "typescript";
+import {getTokenExpression} from "../visitor/directive_visitor";
 
 export type ComponentMetadata = {
   selector: ts.PropertyAssignment;
@@ -23,6 +24,7 @@ export type ComponentMetadata = {
   interpolation: ts.ObjectLiteralElementLike;
   preserveWhitespaces: ts.ObjectLiteralElementLike;
   dependencies: ts.ObjectLiteralElementLike;
+  host: ts.PropertyAssignment;
 };
 
 export function classHasDecorator(node: ts.ClassDeclaration, decoratorName: string) {
@@ -104,6 +106,8 @@ export function extractComponentMetadata(
 
   const styles = getMetadataProperty(metadata.properties, "styles") as ts.PropertyAssignment;
 
+  const host = getMetadataProperty(metadata.properties, "host") as ts.PropertyAssignment;
+
   return {
     selector,
     standalone,
@@ -119,6 +123,7 @@ export function extractComponentMetadata(
     interpolation,
     preserveWhitespaces,
     dependencies,
+    host,
   };
 }
 
@@ -131,56 +136,25 @@ function getMetadataProperty(
   );
 }
 
-// export function createFactoryStatic(componentName: string) {
-//   const factory = ts.factory;
-
-//   const parameterName = "t";
-//   const functionName = componentName + "_Factory";
-
-//   const node = factory.createExpressionStatement(
-//     factory.createAssignment(
-//       factory.createPropertyAccessExpression(factory.createThis(), "ɵfac"),
-//       factory.createFunctionExpression(
-//         undefined,
-//         undefined,
-//         functionName,
-//         undefined,
-//         [
-//           factory.createParameterDeclaration(
-//             undefined,
-//             undefined,
-//             parameterName,
-//             undefined,
-//             undefined,
-//             undefined
-//           ),
-//         ],
-//         undefined,
-//         factory.createBlock(
-//           [
-//             factory.createReturnStatement(
-//               factory.createNewExpression(
-//                 factory.createParenthesizedExpression(
-//                   factory.createLogicalOr(
-//                     factory.createIdentifier(parameterName),
-//                     factory.createIdentifier(componentName)
-//                   )
-//                 ),
-//                 [],
-//                 []
-//               )
-//             ),
-//           ],
-//           true
-//         )
-//       )
-//     )
-//   );
-
-//   return /*createClassStaticBlock(*/ factory.createBlock([node], true); //);
-// }
-export function createFactoryStatic(componentName: string, node: ts.Node) {
+export function createFactoryStatic(componentName: string, node: ts.Node, directivesToInject: ts.ParameterDeclaration[]) {
   const f = ts.factory;
+
+  const factoryArgs = directivesToInject.map(param => {
+    if (!param.type || !ts.isTypeReferenceNode(param.type)) {
+      throw new Error("DI param must have type");
+    }
+
+    const tokenExpr = getTokenExpression(param.type);
+
+    return ts.factory.createCallExpression(
+        ts.factory.createPropertyAccessExpression(
+            ts.factory.createIdentifier("i0"),
+            "ɵɵdirectiveInject"
+        ),
+        undefined,
+        [tokenExpr]
+    );
+  });
 
   return f.createPropertyDeclaration(
     [f.createModifier(ts.SyntaxKind.StaticKeyword)],
@@ -207,13 +181,6 @@ export function createFactoryStatic(componentName: string, node: ts.Node) {
         [
           f.createReturnStatement(
             f.createNewExpression(
-              // f.createParen(
-              //   f.createBinary(
-              //     f.createIdentifier("t"),
-              //     ts.SyntaxKind.BarBarToken,
-              //     f.createIdentifier(componentName),
-              //   ),
-              // ),
               f.createParenthesizedExpression(
                   f.createLogicalOr(
                     f.createIdentifier("t"),
@@ -221,7 +188,7 @@ export function createFactoryStatic(componentName: string, node: ts.Node) {
                   )
                 ),
               undefined,
-              [],
+              factoryArgs,
             ),
           ),
         ],
@@ -231,34 +198,6 @@ export function createFactoryStatic(componentName: string, node: ts.Node) {
   );
 }
 
-
-// export function createDefineComponentStatic(
-//   componentName: string,
-//   metadata: ComponentMetadata
-// ) {
-//   const factory = ts.factory;
-
-//   const node = factory.createExpressionStatement(
-//     factory.createAssignment(
-//       factory.createPropertyAccessExpression(factory.createThis(), "ɵcmp"),
-//       factory.createCallExpression(
-//         factory.createPropertyAccessExpression(
-//           factory.createIdentifier("i0"),
-//           "ɵɵdefineComponent"
-//         ),
-//         undefined,
-//         [
-//           factory.createObjectLiteralExpression(
-//             [...createCmpDefinitionPropertiesNode(componentName, metadata)],
-//             true
-//           ),
-//         ]
-//       )
-//     )
-//   );
-
-//   return factory.createBlock([node], true);
-// }
 export function createDefineComponentStatic(
   componentName: string,
   metadata: ComponentMetadata,

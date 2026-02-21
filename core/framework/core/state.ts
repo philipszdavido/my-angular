@@ -20,6 +20,10 @@ export function setCurrentTNodeAsNotParent(): void {
     runtime.isParent = false;
 }
 
+export function getCurrentTNode() {
+return runtime.currentTNode
+}
+
 export function createLView<T>(
     parentLView: LView | null,
     tView: TView,
